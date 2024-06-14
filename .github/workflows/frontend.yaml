@@ -1,0 +1,66 @@
+name: frontend
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - frontend/**
+      - .github/workflows/frontend.yaml
+  workflow_dispatch:
+
+jobs:
+  setup-packages:
+    name: check npm packages
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: frontend
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ./frontend/.node-version
+          cache: npm
+          cache-dependency-path: ./frontend/package-lock.json
+      - name: npm ci
+        run: npm ci
+        working-directory: ./frontend/
+
+  format:
+    name: format files
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: frontend
+      - name: npm ci
+        run: npm ci
+        working-directory: ./frontend/
+      - name: run format
+        run: npm run format
+        working-directory: ./frontend/
+
+  build-check:
+    name: check npm build
+    needs: [setup-packages, format]
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: frontend
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ./frontend/.node-version
+          cache: npm
+          cache-dependency-path: ./frontend/package-lock.json
+      - name: npm ci
+        run: npm ci
+        working-directory: ./frontend/
+      - name: Run build
+        run: npm run build
+        working-directory: ./frontend/
