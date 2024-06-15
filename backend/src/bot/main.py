@@ -96,6 +96,7 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
                 client=client,
                 body=PostMessageRequest(content=text)
             )
+            return
 
         text = f"この投稿をタスクに追加するよ！\n{選択した曜日}: :{stamp_ids_rev[selected_day.stamp_id]}:\n{リマインドしたい時間を選択してね}！\nhttps://q.trap.jp/messages/{task_message_id}"
         await edit_message.asyncio_detailed(
