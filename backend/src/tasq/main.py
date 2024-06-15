@@ -23,7 +23,7 @@ app.add_middleware(
 
 trao_scheme = APIKeyHeader(name="X-Forwarded-User", scheme_name="traO")
 
-traqapi_config = traqapi.Configuration(access_token="9Pa5kF9grkDtEOA713keCYX2vD9iTzhmA4Lu")
+traqapi_config = traqapi.Configuration(access_token="")
 traqapi_config.verify_ssl = False
 traqapi_client = traqapi.ApiClient(configuration=traqapi_config)
 traqUserApi = traqapi.UserApi(api_client=traqapi_client)
