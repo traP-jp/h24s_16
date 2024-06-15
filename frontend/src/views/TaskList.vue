@@ -4,16 +4,38 @@ import PrimaryButton from '@/components/PrimaryButton.vue'
 import PageContainer from '@/components/PageContainer.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import TaskItem from '@/components/TaskItem.vue'
+import apiClient from '@/apis'
+import type { User, GroupDetails } from '@/apis/generated'
+
+apiClient.default.getUserUsersMeGet().then((res) => (user.value = res))
+apiClient.default.getUserGroupsUsersGroupsGet().then((res) => (userGroups.value = res))
+
+const user = ref<User>({
+  id: '',
+  remind_channel_id: '',
+  periodic_remind_at: '',
+  created_at: '',
+  updated_at: ''
+})
+
+const userGroups = ref<GroupDetails[]>([
+  {
+    id: 'Hackathon 24 spring 16',
+    remind_channel_id: 'ぐおおおおお',
+    periodic_remind_at: 'ああああああああ',
+    created_at: 'string',
+    updated_at: 'string',
+    user_ids: ['Pugma', 'ayana']
+  }
+])
+
+const selectedGroup = ref<string>('')
 
 interface Task {
   id: string
   title: string
   content: string
   showDetails: boolean // 詳細表示の状態を追加
-}
-
-interface Group {
-  name: string
 }
 
 const tasks = ref<Task[]>([
@@ -28,12 +50,6 @@ const tasks = ref<Task[]>([
   { id: '2', title: 'タスク3', content: '内容３', showDetails: false }
 ])
 
-const groups = ref<Group[]>([
-  { name: 'グループ１' },
-  { name: 'グループ２' },
-  { name: 'グループ３' }
-])
-
 // 詳細表示の切り替え関数
 const toggleDetails = (task: Task) => {
   task.showDetails = !task.showDetails
@@ -41,13 +57,16 @@ const toggleDetails = (task: Task) => {
 </script>
 
 <template>
-  <PageHeader title="タスク一覧" username="ぷぐま"/>
+  <PageHeader title="タスク一覧" :username="user.id" />
   <div class="pageContents">
     <!-- サイドバー -->
     <div class="sidebar">
       <ul>
-        <li v-for="group in groups" :key="group.name">
-          <div>{{ group.name }}</div>
+        <li>
+          <button>自分のタスク全体</button>
+        </li>
+        <li v-for="group in userGroups" :key="group.id">
+          <button @click="selectedGroup = group.id">{{ group.id }}</button>
         </li>
       </ul>
       <router-link :to="{ name: 'TaskAdd' }">
@@ -55,6 +74,7 @@ const toggleDetails = (task: Task) => {
       </router-link>
     </div>
     <PageContainer>
+      {{selectedGroup}}
       <!-- タスク一覧表示 -->
       <ul>
         <li v-for="task in tasks" :key="task.id">
