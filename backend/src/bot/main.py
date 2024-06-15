@@ -59,7 +59,7 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
     task_message_text = re.search(r"https://q.trap.jp/messages/([0-9a-f-]+)", res.content)
     if task_message_text is None:
         return
-    task_message_id = message_text.group(1)
+    task_message_id = task_message_text.group(1)
 
     # 任意のbotのスタンプを削除したいかも
     stamps = remove_bot_stamps(res.stamps)
