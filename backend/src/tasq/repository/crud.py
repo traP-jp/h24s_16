@@ -14,6 +14,10 @@ def read_task(db: Session, task_id: str):
     db_task = db.query(models.Task).filter(models.Task.id == task_id).first()
     return db_task
 
+def read_task_by_groupid(db: Session, groupid: str):
+    db_task = db.query(models.Task).filter(models.Task.group_id == groupid).all()
+    return db_task
+
 def update_task(db: Session, task_id: str, task: schemas.TaskUpdate):
     db_task = db.query(models.Task).filter(models.Task.id == task_id).first()
     if db_task:
@@ -97,19 +101,27 @@ def update_group(db: Session, group_id: str, group: schemas.GroupUpdate):
         db.refresh(db_group)
     return db_group
 
-def create_task_assignee(db: Session, task: schemas.Task, user: schemas.User):
-    db_task_assignee = models.TaskAssignee(task_id=task.id, user_id=user.id)
+def create_task_assignee(db: Session, task: schemas.Task, users: list[str]):
+    db_task_assignee = models.TaskAssignee(task_id=task.id, label_id=users)
     db.add(db_task_assignee)
     db.commit()
     db.refresh(db_task_assignee)
     return db_task_assignee
 
 def read_task_assignee_from_task(db: Session, task_id: str):
-    db_task_assignee = db.query(models.Task).filter(models.Task.id == task_id).first()
+    db_task_assignee = db.query(models.TaskAssignee).filter(models.TaskAssignee.id == task_id).all()
     return db_task_assignee
 
 def read_task_assignee_from_user(db: Session, user_id: str):
-    db_task_assignee = db.query(models.User).filter(models.User.id == user_id).all()
+    db_task_assignee = db.query(models.TaskAssignee).filter(user_id in models.TaskAssignee.user_id).all()
+    return db_task_assignee
+
+def update_task_assigee(db: Session, task: schemas.Task, users: list[str]):
+    db_task_assignee = db.query(models.TaskAssignee).filter(models.TaskAssignee.task_id == task.id).first()
+    if db_task_assignee:
+        db_task_assignee.user_id = users
+        db.commit()
+        db.refresh(db_task_assignee)
     return db_task_assignee
 
 def create_task_label(db: Session, task: schemas.Task, labels: list[str]):
