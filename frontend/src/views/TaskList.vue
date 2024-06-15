@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import PrimaryButton from '@/components/PrimaryButton.vue'
+import PageContainer from '@/components/PageContainer.vue'
+import PageHeader from '@/components/PageHeader.vue'
 
 interface Task {
   id: string
@@ -13,107 +16,77 @@ interface Group {
 }
 
 const tasks = ref<Task[]>([
-  { id: '1', title: 'タスク１', content: '内容１あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをんあいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをんあいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん', showDetails: false },
+  {
+    id: '1',
+    title: 'タスク１',
+    content:
+      '内容１あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをんあいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをんあいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん',
+    showDetails: false
+  },
   { id: '2', title: 'タスク２', content: '内容２', showDetails: false },
   { id: '2', title: 'タスク3', content: '内容３', showDetails: false }
 ])
 
 const groups = ref<Group[]>([
-  { name: 'グループ１'},
-  { name: 'グループ２'},
-  { name: 'グループ３'},
+  { name: 'グループ１' },
+  { name: 'グループ２' },
+  { name: 'グループ３' }
 ])
 
 // 詳細表示の切り替え関数
 const toggleDetails = (task: Task) => {
   task.showDetails = !task.showDetails
 }
-
 </script>
 
-
-
 <template>
-  <!-- トップバー
-  <header class = "header">
-    <h1>Header</h1>
-  </header> -->
+  <PageHeader title="タスク一覧" />
+  <div class="pageContents">
+    <!-- サイドバー -->
+    <div class="sidebar">
+      <ul>
+        <span v-for="group in groups" :key="group.name">
+          <div>{{ group.name }}</div>
+        </span>
+      </ul>
+      <router-link :to="{ name: 'TaskAdd' }">
+        <PrimaryButton text="新規タスクを追加" />
+      </router-link>
+    </div>
+    <PageContainer>
+      <!-- タスク一覧表示 -->
+      <div>
+        <ul>
+          <li v-for="task in tasks" :key="task.id">
+            <div class="task-container">
+              <div class="task-title">{{ task.title }}</div>
 
-  <!-- サイドバー -->
-  <div class="sidebar">
-    <ul>
-      <span v-for="group in groups" :key="group.name" >
-        <div>{{ group.name }}</div>
-      </span>
-    </ul>
-    <div>
-    <button class="addTask-button">新規タスクを追加</button>
+              <!-- 詳細情報を条件付きで表示 -->
+              <div v-if="task.showDetails" class="additional-details">
+                <!-- 隠されていた詳細情報 -->
+                {{ task.content }}
+              </div>
+              <div class="task-details">
+                <p>期日：2024年6月15日</p>
+                <!-- 詳細を表示のテキストを追加 -->
+                <button class="detail-button" @click="toggleDetails(task)">詳細を表示</button>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </PageContainer>
   </div>
-  </div>
-
-  <!-- <div>
-    <button class="addTask-button">新規タスクを追加</button>
-  </div> -->
-
-
-
-  <!-- タスク一覧表示 -->
-  <div>
-    <ul>
-      <li v-for="task in tasks" :key="task.id">
-        <div class="task-container">
-          <div class="task-title">{{ task.title }}</div>
-
-          <!-- 詳細情報を条件付きで表示 -->
-          <div v-if="task.showDetails" class="additional-details">
-          <!-- 隠されていた詳細情報 -->
-          {{task.content}}
-          </div>
-          <div class="task-details">
-          <p>期日：2024年6月15日</p>
-          <!-- 詳細を表示のテキストを追加 -->
-          <button class="detail-button" @click="toggleDetails(task)">詳細を表示</button>
-        </div>
-        </div>
-      </li>
-    </ul>
-  </div>
-
-
-
-  <div class="about">
-    <h1>This is an about page</h1>
-  </div>
-  <p style="color: black;">ぐおおおおお</p>
-  <p style="color: black;">わああ</p>
-
-  <ul>
-      <span v-for="task in tasks" :key="task.title" >
-        <div>名前: {{ task.title }}</div>
-      </span>
-  </ul>
-  
 </template>
 
-<style>
-.header {
-  background-color: #464646;
-  color: white;
-  text-align: center;
-  position: fixed;
-  width: 100%;
-  left: 0;
-  top: 0;
-  z-index: 1;
-}
-
+<style lang="scss" scoped>
 .sidebar {
   background-color: #ffffff;
-  position: fixed;
+  // position: fixed;
   width: 200px;
   height: 100%;
-  left: 0;
-  top: 0;
+  // left: 0;
+  // top: 0;
   padding-top: 60px; /* Adjust this value to match the height of your header */
   padding-left: 30px;
   overflow: auto;
@@ -154,7 +127,7 @@ ul {
 
 .detail-button {
   padding: 8px 16px; /* ボタンの内側の余白 */
-  color: #6AA2B4; /* ボタンのテキスト色 */
+  color: $color-primary; /* ボタンのテキスト色 */
   border: none; /* ボーダーを削除 */
   cursor: pointer; /* ホバー時にカーソルをポインターにする */
   margin-bottom: 3px; /* ボタンと詳細情報の間の余白 */
@@ -163,23 +136,9 @@ ul {
 .detail-button:hover {
   text-decoration: underline;
 }
-
-/* タスク追加ボタン */
-.addTask-button {
-  padding: 8px 16px; /* ボタンの内側の余白 */
-  background-color: #6AA2B4; /* ボタンのテキスト色 */
-  border-radius: 5px; /* 枠を丸くする */
-  color: white;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-  border: none; /* ボーダーを削除 */
-  cursor: pointer; /* ホバー時にカーソルをポインターにする */
-  top: 0;
+.pageContents {
+  display: flex;
 }
-
-.addTask-button:hover {
-  background-color: #6a97a7
-}
-
 
 @media (min-width: 1024px) {
   .about {
@@ -193,6 +152,4 @@ ul {
     /* width: calc(100% - 230px); 全体の幅からサイドバーの幅を引く */
   }
 }
-
-
 </style>
