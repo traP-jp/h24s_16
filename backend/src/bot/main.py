@@ -2,16 +2,21 @@ import os
 import re
 
 from aiotraq import AuthenticatedClient
-from aiotraq.api.message import edit_message, get_message, remove_message_stamp
+from aiotraq.api.message import (
+    add_message_stamp,
+    edit_message,
+    get_message,
+    remove_message_stamp,
+)
 from aiotraq.models.message import Message
 from aiotraq.models.post_message_request import PostMessageRequest
+from aiotraq.models.post_message_stamp_request import PostMessageStampRequest
 from aiotraq_bot import TraqHttpBot
 from aiotraq_bot.models.event import (
     BotMessageStampsUpdatedPayload,
     MessageCreatedPayload,
 )
 from aiotraq_message import TraqMessage, TraqMessageManager
-
 from src.bot.stamps import ampmstamps, clockstamps, daystamps, stamp_ids_rev
 from src.bot.util import remove_bot_stamps
 
@@ -92,6 +97,14 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
                     stamp_id=s,
                     client=client
                 )
+
+        for s in ampmstamps + clockstamps:
+            await add_message_stamp.asyncio_detailed(
+                message_id=message_id,
+                stamp_id=s,
+                client=client,
+                body=PostMessageStampRequest(count=1)
+            )
 
     elif リマインドしたい時間を選択してね in res.content:
         # stampsの中で clockstamps に含まれていてかつ一番 createdAt が新しいものを取得
