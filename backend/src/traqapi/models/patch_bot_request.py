@@ -17,67 +17,84 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import List, Optional
-from pydantic import BaseModel, Field, StrictBool, StrictStr, conlist, constr
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
+from typing_extensions import Annotated
 from traqapi.models.bot_mode import BotMode
+from typing import Optional, Set
+from typing_extensions import Self
 
 class PatchBotRequest(BaseModel):
     """
-    BOT情報変更リクエスト  # noqa: E501
-    """
-    display_name: Optional[constr(strict=True, max_length=32)] = Field(None, alias="displayName", description="BOTユーザー表示名")
-    description: Optional[constr(strict=True, max_length=1000)] = Field(None, description="BOTの説明")
-    privileged: Optional[StrictBool] = Field(None, description="特権")
+    BOT情報変更リクエスト
+    """ # noqa: E501
+    display_name: Optional[Annotated[str, Field(strict=True, max_length=32)]] = Field(default=None, description="BOTユーザー表示名", alias="displayName")
+    description: Optional[Annotated[str, Field(strict=True, max_length=1000)]] = Field(default=None, description="BOTの説明")
+    privileged: Optional[StrictBool] = Field(default=None, description="特権")
     mode: Optional[BotMode] = None
-    endpoint: Optional[StrictStr] = Field(None, description="BOTサーバーエンドポイント")
-    developer_id: Optional[StrictStr] = Field(None, alias="developerId", description="移譲先の開発者UUID")
-    subscribe_events: Optional[conlist(StrictStr)] = Field(None, alias="subscribeEvents", description="購読するイベント")
-    __properties = ["displayName", "description", "privileged", "mode", "endpoint", "developerId", "subscribeEvents"]
+    endpoint: Optional[StrictStr] = Field(default=None, description="BOTサーバーエンドポイント")
+    developer_id: Optional[StrictStr] = Field(default=None, description="移譲先の開発者UUID", alias="developerId")
+    subscribe_events: Optional[List[StrictStr]] = Field(default=None, description="購読するイベント", alias="subscribeEvents")
+    __properties: ClassVar[List[str]] = ["displayName", "description", "privileged", "mode", "endpoint", "developerId", "subscribeEvents"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> PatchBotRequest:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of PatchBotRequest from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> PatchBotRequest:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of PatchBotRequest from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return PatchBotRequest.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = PatchBotRequest.parse_obj({
-            "display_name": obj.get("displayName"),
+        _obj = cls.model_validate({
+            "displayName": obj.get("displayName"),
             "description": obj.get("description"),
             "privileged": obj.get("privileged"),
             "mode": obj.get("mode"),
             "endpoint": obj.get("endpoint"),
-            "developer_id": obj.get("developerId"),
-            "subscribe_events": obj.get("subscribeEvents")
+            "developerId": obj.get("developerId"),
+            "subscribeEvents": obj.get("subscribeEvents")
         })
         return _obj
 

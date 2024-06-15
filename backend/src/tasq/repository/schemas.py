@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from datetime import datetime
 
 
 class TaskBase(BaseModel):
@@ -17,8 +18,8 @@ class TaskUpdate(TaskBase):
 class Task(TaskBase):
     id: str
     group_id: str
-    created_at: str
-    updated_at: str
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         orm_mode = True
@@ -36,13 +37,13 @@ class LabelUpdate(LabelBase):
 class Label(LabelBase):
     id: str
     group_id: str
-    created_at: str
-    updated_at: str
+    created_at: datetime
+    updated_at: datetime
 
 class UserBase(BaseModel):
     id: str
-    remind_channel_id: str
-    periodic_remind_at: str
+    remind_channel_id: str | None
+    periodic_remind_at: str | None
 
 class UserCreate(UserBase):
     pass
@@ -51,13 +52,13 @@ class UserUpdate(UserBase):
     pass
 
 class User(UserBase):
-    created_at: str
-    updated_at: str
+    created_at: datetime
+    updated_at: datetime
 
 class GroupBase(BaseModel):
     id: str
-    remind_channel_id: str
-    periodic_remind_at: str
+    remind_channel_id: str | None
+    periodic_remind_at: str | None
 
 class GroupCreate(GroupBase):
     pass
@@ -66,8 +67,8 @@ class GroupUpdate(GroupBase):
     pass
 
 class Group(GroupBase):
-    created_at: str
-    updated_at: str
+    created_at: datetime
+    updated_at: datetime
 
 class TaskAssigneeBase(BaseModel):
     task_id: str
@@ -80,8 +81,8 @@ class TaskAssigneeUpdate(TaskAssigneeBase):
     pass
 
 class TaskAssignee(TaskAssigneeBase):
-    created_at: str
-    updated_at: str
+    created_at: datetime
+    updated_at: datetime
 
 # user+group: c+r+u
 
@@ -96,5 +97,5 @@ class TaskLabelUpdate(TaskLabelBase):
     pass
 
 class TaskLabel(TaskLabelBase):
-    created_at: str
-    updated_at: str
+    created_at: datetime
+    updated_at: datetime

@@ -17,44 +17,60 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import List, Optional
-from pydantic import BaseModel, Field, conlist
+from pydantic import BaseModel, ConfigDict, Field
+from typing import Any, ClassVar, Dict, List, Optional
 from traqapi.models.channel import Channel
 from traqapi.models.dm_channel import DMChannel
+from typing import Optional, Set
+from typing_extensions import Self
 
 class ChannelList(BaseModel):
     """
-    GET /channelsレスポンス  # noqa: E501
-    """
-    public: conlist(Channel) = Field(..., description="パブリックチャンネルの配列")
-    dm: Optional[conlist(DMChannel)] = Field(None, description="ダイレクトメッセージチャンネルの配列")
-    __properties = ["public", "dm"]
+    GET /channelsレスポンス
+    """ # noqa: E501
+    public: List[Channel] = Field(description="パブリックチャンネルの配列")
+    dm: Optional[List[DMChannel]] = Field(default=None, description="ダイレクトメッセージチャンネルの配列")
+    __properties: ClassVar[List[str]] = ["public", "dm"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> ChannelList:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of ChannelList from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
         # override the default output from pydantic by calling `to_dict()` of each item in public (list)
         _items = []
         if self.public:
@@ -72,17 +88,17 @@ class ChannelList(BaseModel):
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> ChannelList:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of ChannelList from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return ChannelList.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = ChannelList.parse_obj({
-            "public": [Channel.from_dict(_item) for _item in obj.get("public")] if obj.get("public") is not None else None,
-            "dm": [DMChannel.from_dict(_item) for _item in obj.get("dm")] if obj.get("dm") is not None else None
+        _obj = cls.model_validate({
+            "public": [Channel.from_dict(_item) for _item in obj["public"]] if obj.get("public") is not None else None,
+            "dm": [DMChannel.from_dict(_item) for _item in obj["dm"]] if obj.get("dm") is not None else None
         })
         return _obj
 

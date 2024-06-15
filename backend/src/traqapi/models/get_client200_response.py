@@ -13,17 +13,15 @@
 
 
 from __future__ import annotations
-from inspect import getfullargspec
 import json
 import pprint
-import re  # noqa: F401
-
+from pydantic import BaseModel, ConfigDict, Field, StrictStr, ValidationError, field_validator
 from typing import Any, List, Optional
-from pydantic import BaseModel, Field, StrictStr, ValidationError, validator
 from traqapi.models.o_auth2_client import OAuth2Client
 from traqapi.models.o_auth2_client_detail import OAuth2ClientDetail
-from typing import Union, Any, List, TYPE_CHECKING
 from pydantic import StrictStr, Field
+from typing import Union, List, Set, Optional, Dict
+from typing_extensions import Literal, Self
 
 GETCLIENT200RESPONSE_ONE_OF_SCHEMAS = ["OAuth2Client", "OAuth2ClientDetail"]
 
@@ -35,14 +33,14 @@ class GetClient200Response(BaseModel):
     oneof_schema_1_validator: Optional[OAuth2Client] = None
     # data type: OAuth2ClientDetail
     oneof_schema_2_validator: Optional[OAuth2ClientDetail] = None
-    if TYPE_CHECKING:
-        actual_instance: Union[OAuth2Client, OAuth2ClientDetail]
-    else:
-        actual_instance: Any
-    one_of_schemas: List[str] = Field(GETCLIENT200RESPONSE_ONE_OF_SCHEMAS, const=True)
+    actual_instance: Optional[Union[OAuth2Client, OAuth2ClientDetail]] = None
+    one_of_schemas: Set[str] = { "OAuth2Client", "OAuth2ClientDetail" }
 
-    class Config:
-        validate_assignment = True
+    model_config = ConfigDict(
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def __init__(self, *args, **kwargs) -> None:
         if args:
@@ -54,9 +52,9 @@ class GetClient200Response(BaseModel):
         else:
             super().__init__(**kwargs)
 
-    @validator('actual_instance')
+    @field_validator('actual_instance')
     def actual_instance_must_validate_oneof(cls, v):
-        instance = GetClient200Response.construct()
+        instance = GetClient200Response.model_construct()
         error_messages = []
         match = 0
         # validate data type: OAuth2Client
@@ -79,13 +77,13 @@ class GetClient200Response(BaseModel):
             return v
 
     @classmethod
-    def from_dict(cls, obj: dict) -> GetClient200Response:
+    def from_dict(cls, obj: Union[str, Dict[str, Any]]) -> Self:
         return cls.from_json(json.dumps(obj))
 
     @classmethod
-    def from_json(cls, json_str: str) -> GetClient200Response:
+    def from_json(cls, json_str: str) -> Self:
         """Returns the object represented by the json string"""
-        instance = GetClient200Response.construct()
+        instance = cls.model_construct()
         error_messages = []
         match = 0
 
@@ -116,19 +114,17 @@ class GetClient200Response(BaseModel):
         if self.actual_instance is None:
             return "null"
 
-        to_json = getattr(self.actual_instance, "to_json", None)
-        if callable(to_json):
+        if hasattr(self.actual_instance, "to_json") and callable(self.actual_instance.to_json):
             return self.actual_instance.to_json()
         else:
             return json.dumps(self.actual_instance)
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> Optional[Union[Dict[str, Any], OAuth2Client, OAuth2ClientDetail]]:
         """Returns the dict representation of the actual instance"""
         if self.actual_instance is None:
             return None
 
-        to_dict = getattr(self.actual_instance, "to_dict", None)
-        if callable(to_dict):
+        if hasattr(self.actual_instance, "to_dict") and callable(self.actual_instance.to_dict):
             return self.actual_instance.to_dict()
         else:
             # primitive type
@@ -136,6 +132,6 @@ class GetClient200Response(BaseModel):
 
     def to_str(self) -> str:
         """Returns the string representation of the actual instance"""
-        return pprint.pformat(self.dict())
+        return pprint.pformat(self.model_dump())
 
 

@@ -17,59 +17,76 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import List
-from pydantic import BaseModel, Field, StrictStr, conlist, constr
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from typing import Any, ClassVar, Dict, List
+from typing_extensions import Annotated
 from traqapi.models.o_auth2_scope import OAuth2Scope
+from typing import Optional, Set
+from typing_extensions import Self
 
 class PostClientRequest(BaseModel):
     """
-    OAuth2クライアント作成リクエスト  # noqa: E501
-    """
-    name: constr(strict=True, max_length=32, min_length=1) = Field(..., description="クライアント名")
-    callback_url: StrictStr = Field(..., alias="callbackUrl", description="コールバックURL")
-    scopes: conlist(OAuth2Scope) = Field(..., description="要求スコープの配列")
-    description: constr(strict=True, max_length=1000) = Field(..., description="説明")
-    __properties = ["name", "callbackUrl", "scopes", "description"]
+    OAuth2クライアント作成リクエスト
+    """ # noqa: E501
+    name: Annotated[str, Field(min_length=1, strict=True, max_length=32)] = Field(description="クライアント名")
+    callback_url: StrictStr = Field(description="コールバックURL", alias="callbackUrl")
+    scopes: List[OAuth2Scope] = Field(description="要求スコープの配列")
+    description: Annotated[str, Field(strict=True, max_length=1000)] = Field(description="説明")
+    __properties: ClassVar[List[str]] = ["name", "callbackUrl", "scopes", "description"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> PostClientRequest:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of PostClientRequest from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> PostClientRequest:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of PostClientRequest from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return PostClientRequest.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = PostClientRequest.parse_obj({
+        _obj = cls.model_validate({
             "name": obj.get("name"),
-            "callback_url": obj.get("callbackUrl"),
+            "callbackUrl": obj.get("callbackUrl"),
             "scopes": obj.get("scopes"),
             "description": obj.get("description")
         })
