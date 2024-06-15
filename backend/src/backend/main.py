@@ -1,11 +1,10 @@
 from fastapi import FastAPI, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Annotated, Optional
-from fastapi.security.http import HTTPBase
-from fastapi.openapi.models import HTTPBase as HTTPBaseModel
 from starlette.requests import Request
+from fastapi.security import APIKeyHeader
 
 app = FastAPI()
 app.add_middleware(
@@ -16,6 +15,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+trao_scheme = APIKeyHeader(name="X-Forwarded-User", scheme_name="traO")
 
 class Task(BaseModel):
     id: str
@@ -55,41 +55,41 @@ class Group(BaseModel):
 
 
 @app.get("/users/me")
-def get_user() -> User:
+def get_user(user_id: Annotated[str, Depends(trao_scheme)]) -> User:
     pass
 
 @app.get("/users/groups")
-def get_user_groups() -> list[Group]:
+def get_user_groups(user_id: Annotated[str, Depends(trao_scheme)]) -> list[Group]:
     pass
 
 @app.get("/groups/{group_id}")
-def get_group(group_id: str) -> Group:
+def get_group(group_id: str, user_id: Annotated[str, Depends(trao_scheme)]) -> Group:
     pass
 
 @app.get("/groups/{group_id}/tasks")
-def get_group_tasks(group_id: str) -> list[Task]:
+def get_group_tasks(group_id: str, user_id: Annotated[str, Depends(trao_scheme)]) -> list[Task]:
     pass
 
 @app.post("/tasks")
-def create_task(new_task: CreateTaskRequest) -> Task:
+def create_task(new_task: CreateTaskRequest, user_id: Annotated[str, Depends(trao_scheme)]) -> Task:
     pass
 
 @app.patch("/tasks/{task_id}")
-def edit_task(task_id: str):
+def edit_task(task_id: str, user_id: Annotated[str, Depends(trao_scheme)]):
     pass
 
 @app.delete("/tasks/{task_id}")
-def delete_task(task_id: str):
+def delete_task(task_id: str, user_id: Annotated[str, Depends(trao_scheme)]):
     pass
 
 @app.post("/labels")
-def create_label(new_label: CreateLabelRequest) -> Label:
+def create_label(new_label: CreateLabelRequest, user_id: Annotated[str, Depends(trao_scheme)]) -> Label:
     pass
 
 @app.patch("/labels/{label_id}")
-def edit_label(label_id: str):
+def edit_label(label_id: str, user_id: Annotated[str, Depends(trao_scheme)]):
     pass
 
 @app.delete("/labels/{label_id}")
-def delete_label(label_id: str):
+def delete_label(label_id: str, user_id: Annotated[str, Depends(trao_scheme)]):
     pass
