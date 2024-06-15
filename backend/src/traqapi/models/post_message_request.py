@@ -17,54 +17,71 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Optional
-from pydantic import BaseModel, Field, StrictBool, constr
+from pydantic import BaseModel, ConfigDict, Field, StrictBool
+from typing import Any, ClassVar, Dict, List, Optional
+from typing_extensions import Annotated
+from typing import Optional, Set
+from typing_extensions import Self
 
 class PostMessageRequest(BaseModel):
     """
-    メッセージ投稿リクエスト  # noqa: E501
-    """
-    content: constr(strict=True, max_length=10000, min_length=1) = Field(..., description="メッセージ本文")
-    embed: Optional[StrictBool] = Field(False, description="メンション・チャンネルリンクを自動埋め込みするか")
-    __properties = ["content", "embed"]
+    メッセージ投稿リクエスト
+    """ # noqa: E501
+    content: Annotated[str, Field(min_length=1, strict=True, max_length=10000)] = Field(description="メッセージ本文")
+    embed: Optional[StrictBool] = Field(default=False, description="メンション・チャンネルリンクを自動埋め込みするか")
+    __properties: ClassVar[List[str]] = ["content", "embed"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> PostMessageRequest:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of PostMessageRequest from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> PostMessageRequest:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of PostMessageRequest from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return PostMessageRequest.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = PostMessageRequest.parse_obj({
+        _obj = cls.model_validate({
             "content": obj.get("content"),
             "embed": obj.get("embed") if obj.get("embed") is not None else False
         })
