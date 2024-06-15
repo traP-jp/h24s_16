@@ -41,7 +41,7 @@ const toggleDetails = (task: Task) => {
 </script>
 
 <template>
-  <PageHeader title="タスク一覧" />
+  <PageHeader title="タスク一覧" username="ぷぐま"/>
   <div class="pageContents">
     <!-- サイドバー -->
     <div class="sidebar">
