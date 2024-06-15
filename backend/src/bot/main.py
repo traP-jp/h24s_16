@@ -1,21 +1,17 @@
+import asyncio
+import datetime
 import os
 import re
 
 from aiotraq import AuthenticatedClient
-from aiotraq.api.message import (
-    add_message_stamp,
-    edit_message,
-    get_message,
-    remove_message_stamp,
-)
+from aiotraq.api.message import (add_message_stamp, edit_message, get_message,
+                                 remove_message_stamp)
 from aiotraq.models.message import Message
 from aiotraq.models.post_message_request import PostMessageRequest
 from aiotraq.models.post_message_stamp_request import PostMessageStampRequest
 from aiotraq_bot import TraqHttpBot
-from aiotraq_bot.models.event import (
-    BotMessageStampsUpdatedPayload,
-    MessageCreatedPayload,
-)
+from aiotraq_bot.models.event import (BotMessageStampsUpdatedPayload,
+                                      MessageCreatedPayload)
 from aiotraq_message import TraqMessage, TraqMessageManager
 from src.bot.stamps import ampmstamps, clockstamps, daystamps, stamp_ids_rev
 from src.bot.util import remove_bot_stamps
@@ -28,6 +24,7 @@ bot = TraqHttpBot(verification_token=bot_verification_token)
 response = TraqMessageManager(bot, bot_access_token, base_url=base_url, base_client_url="https://q.trap.jp")
 
 client = AuthenticatedClient(base_url=base_url, token=bot_access_token)
+tz_jst_name = datetime.timezone(datetime.timedelta(hours=9), name='JST')
 
 リマインドしたい曜日を選択してね = "リマインドしたい曜日を選択してね"
 リマインドしたい時間を選択してね = "リマインドしたい時間を選択してね"
@@ -47,8 +44,13 @@ async def on_reply(am: TraqMessage, payload: MessageCreatedPayload):
         return
     message_id = message_text.group(1)
     am.write(f"この投稿をタスクに追加するよ！\n{リマインドしたい曜日を選択してね}！直近一週間以降やリマインドがいらない場合は :day7_darkday:を選択してね！ \nhttps://q.trap.jp/messages/{message_id}")
-    for s in daystamps:
+
+    now = datetime.datetime.now(tz=tz_jst_name)
+    now_weekday = (now.weekday() + 1) % 7
+    for i in range(7):
+        s = daystamps[(now_weekday + i) % 7]
         am.stamp(s)
+    am.stamp(daystamps[7])
 
 
 @bot.event("BOT_MESSAGE_STAMPS_UPDATED")
@@ -59,8 +61,6 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
     if res is None or not isinstance(res, Message):
         return
 
-    print(res.content)
-
     task_message_text = re.search(r"https://q.trap.jp/messages/([0-9a-f-]+)", res.content)
     if task_message_text is None:
         return
@@ -68,8 +68,6 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
 
     # 任意のbotのスタンプを削除したいかも
     stamps = remove_bot_stamps(res.stamps)
-
-    print(stamps)
 
     if リマインドしたい曜日を選択してね in res.content:
         # stampsの中で daystamps に含まれていてかつ一番 createdAt が新しいものを取得
@@ -81,7 +79,23 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
         if selected_day is None:
             return
 
-        print(selected_day.stamp_id)
+        if selected_day.stamp_id == daystamps[7]:
+            text = f":loading: タスクを設定中だよ！\nhttps://q.trap.jp/messages/{task_message_id}"
+            await edit_message.asyncio_detailed(
+                message_id=message_id,
+                client=client,
+                body=PostMessageRequest(content=text)
+            )
+
+            # todo
+            await asyncio.sleep(1)
+
+            text = f"タスクが設定されたよ！\nhttps://q.trap.jp/messages/{task_message_id}"
+            await edit_message.asyncio_detailed(
+                message_id=message_id,
+                client=client,
+                body=PostMessageRequest(content=text)
+            )
 
         text = f"この投稿をタスクに追加するよ！\n{選択した曜日}: :{stamp_ids_rev[selected_day.stamp_id]}:\n{リマインドしたい時間を選択してね}！\nhttps://q.trap.jp/messages/{task_message_id}"
         await edit_message.asyncio_detailed(
@@ -133,7 +147,7 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
                     client=client
                 )
 
-        text = f":loading: リマインドを設定中だよ！\nhttps://q.trap.jp/messages/{task_message_id}"
+        text = f":loading: タスクを設定中だよ！\nhttps://q.trap.jp/messages/{task_message_id}"
         await edit_message.asyncio_detailed(
             message_id=message_id,
             client=client,
@@ -148,7 +162,9 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
 
         # todo
 
-        text = f"リマインドが設定されたよ！\n{選択した曜日}: :{day_stamp}:\n選択した時間: :{stamp_ids_rev[selected_ampm.stamp_id]}::{stamp_ids_rev[selected_clock.stamp_id]}:\nhttps://q.trap.jp/messages/{task_message_id}"
+        await asyncio.sleep(1)
+
+        text = f"タスクが設定されたよ！\n{選択した曜日}: :{day_stamp}:\n選択した時間: :{stamp_ids_rev[selected_ampm.stamp_id]}::{stamp_ids_rev[selected_clock.stamp_id]}:\nhttps://q.trap.jp/messages/{task_message_id}"
         await edit_message.asyncio_detailed(
             message_id=message_id,
             client=client,
