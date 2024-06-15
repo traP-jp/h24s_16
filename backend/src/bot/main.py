@@ -54,6 +54,8 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
     if res is None or not isinstance(res, Message):
         return
 
+    print(res.content)
+
     message_text = re.search(r"https://q.trap.jp/messages/([0-9a-f-]+)", res.content)
     if message_text is None:
         return
@@ -62,17 +64,22 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
     # 任意のbotのスタンプを削除したいかも
     stamps = remove_bot_stamps(res.stamps)
 
+    print(stamps)
+
     if リマインドしたい曜日を選択してね in res.content:
+        print("リマインドしたい曜日を選択してね")
         # stampsの中で daystamps に含まれていてかつ一番 createdAt が新しいものを取得
-        selected_stamp = None
+        selected_day = None
         for stamp in stamps:
             if stamp.stamp_id in daystamps:
-                if selected_stamp is None or selected_stamp.created_at < stamp.created_at:
-                    selected_stamp = stamp
-        if selected_stamp is None:
+                if selected_day is None or selected_day.created_at < stamp.created_at:
+                    selected_day = stamp
+        if selected_day is None:
             return
 
-        text = f"この投稿をタスクに追加するよ！\n{選択した曜日}: :{stamp_ids_rev[selected_stamp.stamp_id]}:\n{リマインドしたい時間を選択してね}！\nhttps://q.trap.jp/messages/{message_id}"
+        print(selected_day.stamp_id)
+
+        text = f"この投稿をタスクに追加するよ！\n{選択した曜日}: :{stamp_ids_rev[selected_day.stamp_id]}:\n{リマインドしたい時間を選択してね}！\nhttps://q.trap.jp/messages/{message_id}"
         await edit_message.asyncio_detailed(
             message_id=message_id,
             client=client,
@@ -80,7 +87,7 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
         )
 
         for s in daystamps:
-            if s != selected_stamp.stamp_id:
+            if s != selected_day.stamp_id:
                 await remove_message_stamp.asyncio_detailed(
                     message_id=message_id,
                     stamp_id=s,
