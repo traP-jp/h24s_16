@@ -5,18 +5,18 @@ class TaskBase(BaseModel):
     title: str
     content: str
     message_id: str | None = None
-    group_id: str
     due_date: str | None = None
 
 
 class TaskCreate(TaskBase):
-    pass
+    group_id: str
 
 class TaskUpdate(TaskBase):
     pass
 
 class Task(TaskBase):
     id: str
+    group_id: str
     created_at: str
     updated_at: str
 
@@ -25,9 +25,9 @@ class Task(TaskBase):
 
 class LabelBase(BaseModel):
     name: str
-    group_id: str
 
 class LabelCreate(LabelBase):
+    group_id: str
     pass
 
 class LabelUpdate(LabelBase):
@@ -35,6 +35,7 @@ class LabelUpdate(LabelBase):
 
 class Label(LabelBase):
     id: str
+    group_id: str
     created_at: str
     updated_at: str
 
