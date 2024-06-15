@@ -7,6 +7,7 @@ authors = [
 ]
 dependencies = [
     "fastapi>=0.111.0",
+    "sqlalchemy>=2.0.30",
     "aiotraq>=0.1.2",
     "aiotraq-bot>=0.1.2",
     "aiotraq-message>=0.2.0",
