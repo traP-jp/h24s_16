@@ -15,7 +15,7 @@ aiotraq==0.1.2
 aiotraq-bot==0.1.2
     # via aiotraq-message
     # via tasq-backend
-aiotraq-message==0.2.1
+aiotraq-message==0.2.2
     # via tasq-backend
 alembic==1.13.1
     # via tasq-backend
@@ -42,6 +42,8 @@ fastapi==0.111.0
     # via tasq-backend
 fastapi-cli==0.0.4
     # via fastapi
+greenlet==3.0.3
+    # via sqlalchemy
 h11==0.14.0
     # via httpcore
     # via uvicorn
