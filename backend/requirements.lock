@@ -9,6 +9,8 @@
 #   generate-hashes: false
 
 -e file:.
+aenum==3.1.15
+    # via tasq-backend
 aiotraq==0.1.2
     # via aiotraq-message
     # via tasq-backend
@@ -17,8 +19,6 @@ aiotraq-bot==0.1.2
     # via tasq-backend
 aiotraq-message==0.2.0
     # via tasq-backend
-annotated-types==0.7.0
-    # via pydantic
 anyio==4.4.0
     # via httpx
     # via starlette
@@ -71,15 +71,15 @@ pandas==2.2.2
     # via aiotraq-message
 pillow==10.3.0
     # via aiotraq-message
-pydantic==2.7.4
+pydantic==1.10.16
     # via fastapi
-pydantic-core==2.18.4
-    # via pydantic
+    # via tasq-backend
 pygments==2.18.0
     # via rich
 python-dateutil==2.9.0.post0
     # via aiotraq
     # via pandas
+    # via tasq-backend
 python-dotenv==1.0.1
     # via uvicorn
 python-multipart==0.0.9
@@ -106,12 +106,13 @@ typer==0.12.3
 typing-extensions==4.12.2
     # via fastapi
     # via pydantic
-    # via pydantic-core
     # via typer
 tzdata==2024.1
     # via pandas
 ujson==5.10.0
     # via fastapi
+urllib3==2.0.7
+    # via tasq-backend
 uvicorn==0.30.1
     # via aiotraq-bot
     # via fastapi

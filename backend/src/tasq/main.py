@@ -6,6 +6,7 @@ from typing import Annotated, Optional
 from starlette.requests import Request
 from fastapi.security import APIKeyHeader
 
+
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -93,3 +94,4 @@ def edit_label(label_id: str, user_id: Annotated[str, Depends(trao_scheme)]):
 @app.delete("/labels/{label_id}")
 def delete_label(label_id: str, user_id: Annotated[str, Depends(trao_scheme)]):
     pass
+
