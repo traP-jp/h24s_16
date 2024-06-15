@@ -42,8 +42,6 @@ fastapi==0.111.0
     # via tasq-backend
 fastapi-cli==0.0.4
     # via fastapi
-greenlet==3.0.3
-    # via sqlalchemy
 h11==0.14.0
     # via httpcore
     # via uvicorn

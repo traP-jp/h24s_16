@@ -4,11 +4,12 @@ import os
 
 
 from aiotraq_bot import TraqHttpBot
+from aiotraq_bot.models.event import MessageCreatedPayload
 from aiotraq_message import TraqMessage, TraqMessageManager
 
 
-async def component(am: TraqMessage, payload: dict):
-    am.write(json.dumps(payload))
+async def component(am: TraqMessage, payload: MessageCreatedPayload):
+    am.write(f"```json\n{json.dumps(payload.model_dump(), indent=2)}\n```")
     # long task
     with am.spinner():
         await asyncio.sleep(3)
@@ -19,7 +20,7 @@ response = TraqMessageManager(bot, os.getenv("BOT_ACCESS_TOKEN", ""), "https://q
 
 
 @bot.event("MESSAGE_CREATED")
-async def on_message_created(payload) -> None:
+async def on_message_created(payload: MessageCreatedPayload) -> None:
     channel_id = payload.message.channelId
     # message = payload.message.plainText
 
