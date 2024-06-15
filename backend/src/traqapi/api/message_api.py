@@ -11,20 +11,15 @@
     Do not edit the class manually.
 """  # noqa: E501
 
-
-import re  # noqa: F401
-import io
 import warnings
-
-from pydantic import validate_arguments, ValidationError
-
+from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
+from typing import Any, Dict, List, Optional, Tuple, Union
 from typing_extensions import Annotated
+
 from datetime import datetime
-
-from pydantic import Field, StrictBool, StrictInt, StrictStr, conint
-
+from pydantic import Field, StrictBool, StrictInt, StrictStr, field_validator
 from typing import List, Optional
-
+from typing_extensions import Annotated
 from traqapi.models.message import Message
 from traqapi.models.message_clip import MessageClip
 from traqapi.models.message_pin import MessagePin
@@ -33,12 +28,9 @@ from traqapi.models.message_stamp import MessageStamp
 from traqapi.models.post_message_request import PostMessageRequest
 from traqapi.models.post_message_stamp_request import PostMessageStampRequest
 
-from traqapi.api_client import ApiClient
+from traqapi.api_client import ApiClient, RequestSerialized
 from traqapi.api_response import ApiResponse
-from traqapi.exceptions import (  # noqa: F401
-    ApiTypeError,
-    ApiValueError
-)
+from traqapi.rest import RESTResponseType
 
 
 class MessageApi:
@@ -53,50 +45,29 @@ class MessageApi:
             api_client = ApiClient.get_default()
         self.api_client = api_client
 
-    @validate_arguments
-    def add_message_stamp(self, message_id : Annotated[StrictStr, Field(..., description="メッセージUUID")], stamp_id : Annotated[StrictStr, Field(..., description="スタンプUUID")], post_message_stamp_request : Optional[PostMessageStampRequest] = None, **kwargs) -> None:  # noqa: E501
-        """スタンプを押す  # noqa: E501
 
-        指定したメッセージに指定したスタンプを押します。  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
+    @validate_call
+    def add_message_stamp(
+        self,
+        message_id: Annotated[StrictStr, Field(description="メッセージUUID")],
+        stamp_id: Annotated[StrictStr, Field(description="スタンプUUID")],
+        post_message_stamp_request: Optional[PostMessageStampRequest] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> None:
+        """スタンプを押す
 
-        >>> thread = api.add_message_stamp(message_id, stamp_id, post_message_stamp_request, async_req=True)
-        >>> result = thread.get()
-
-        :param message_id: メッセージUUID (required)
-        :type message_id: str
-        :param stamp_id: スタンプUUID (required)
-        :type stamp_id: str
-        :param post_message_stamp_request: 
-        :type post_message_stamp_request: PostMessageStampRequest
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request.
-               If one number provided, it will be total request
-               timeout. It can also be a pair (tuple) of
-               (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: None
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            message = "Error! Please call the add_message_stamp_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
-            raise ValueError(message)
-        return self.add_message_stamp_with_http_info(message_id, stamp_id, post_message_stamp_request, **kwargs)  # noqa: E501
-
-    @validate_arguments
-    def add_message_stamp_with_http_info(self, message_id : Annotated[StrictStr, Field(..., description="メッセージUUID")], stamp_id : Annotated[StrictStr, Field(..., description="スタンプUUID")], post_message_stamp_request : Optional[PostMessageStampRequest] = None, **kwargs) -> ApiResponse:  # noqa: E501
-        """スタンプを押す  # noqa: E501
-
-        指定したメッセージに指定したスタンプを押します。  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.add_message_stamp_with_http_info(message_id, stamp_id, post_message_stamp_request, async_req=True)
-        >>> result = thread.get()
+        指定したメッセージに指定したスタンプを押します。
 
         :param message_id: メッセージUUID (required)
         :type message_id: str
@@ -104,2093 +75,4062 @@ class MessageApi:
         :type stamp_id: str
         :param post_message_stamp_request: 
         :type post_message_stamp_request: PostMessageStampRequest
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
                                  (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
         :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
         :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
         :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: None
-        """
+        """ # noqa: E501
 
-        _params = locals()
-
-        _all_params = [
-            'message_id',
-            'stamp_id',
-            'post_message_stamp_request'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
+        _param = self._add_message_stamp_serialize(
+            message_id=message_id,
+            stamp_id=stamp_id,
+            post_message_stamp_request=post_message_stamp_request,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
         )
 
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method add_message_stamp" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
+        _response_types_map: Dict[str, Optional[str]] = {
+            '204': None,
+            '400': None,
+            '404': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
 
-        _collection_formats = {}
+
+    @validate_call
+    def add_message_stamp_with_http_info(
+        self,
+        message_id: Annotated[StrictStr, Field(description="メッセージUUID")],
+        stamp_id: Annotated[StrictStr, Field(description="スタンプUUID")],
+        post_message_stamp_request: Optional[PostMessageStampRequest] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[None]:
+        """スタンプを押す
+
+        指定したメッセージに指定したスタンプを押します。
+
+        :param message_id: メッセージUUID (required)
+        :type message_id: str
+        :param stamp_id: スタンプUUID (required)
+        :type stamp_id: str
+        :param post_message_stamp_request: 
+        :type post_message_stamp_request: PostMessageStampRequest
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._add_message_stamp_serialize(
+            message_id=message_id,
+            stamp_id=stamp_id,
+            post_message_stamp_request=post_message_stamp_request,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '204': None,
+            '400': None,
+            '404': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    def add_message_stamp_without_preload_content(
+        self,
+        message_id: Annotated[StrictStr, Field(description="メッセージUUID")],
+        stamp_id: Annotated[StrictStr, Field(description="スタンプUUID")],
+        post_message_stamp_request: Optional[PostMessageStampRequest] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """スタンプを押す
+
+        指定したメッセージに指定したスタンプを押します。
+
+        :param message_id: メッセージUUID (required)
+        :type message_id: str
+        :param stamp_id: スタンプUUID (required)
+        :type stamp_id: str
+        :param post_message_stamp_request: 
+        :type post_message_stamp_request: PostMessageStampRequest
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._add_message_stamp_serialize(
+            message_id=message_id,
+            stamp_id=stamp_id,
+            post_message_stamp_request=post_message_stamp_request,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '204': None,
+            '400': None,
+            '404': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _add_message_stamp_serialize(
+        self,
+        message_id,
+        stamp_id,
+        post_message_stamp_request,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[str, Union[str, bytes]] = {}
+        _body_params: Optional[bytes] = None
 
         # process the path parameters
-        _path_params = {}
-        if _params['message_id']:
-            _path_params['messageId'] = _params['message_id']
-
-        if _params['stamp_id']:
-            _path_params['stampId'] = _params['stamp_id']
-
-
+        if message_id is not None:
+            _path_params['messageId'] = message_id
+        if stamp_id is not None:
+            _path_params['stampId'] = stamp_id
         # process the query parameters
-        _query_params = []
         # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
         # process the form parameters
-        _form_params = []
-        _files = {}
         # process the body parameter
-        _body_params = None
-        if _params['post_message_stamp_request'] is not None:
-            _body_params = _params['post_message_stamp_request']
+        if post_message_stamp_request is not None:
+            _body_params = post_message_stamp_request
+
+
 
         # set the HTTP header `Content-Type`
-        _content_types_list = _params.get('_content_type',
-            self.api_client.select_header_content_type(
-                ['application/json']))
-        if _content_types_list:
-                _header_params['Content-Type'] = _content_types_list
+        if _content_type:
+            _header_params['Content-Type'] = _content_type
+        else:
+            _default_content_type = (
+                self.api_client.select_header_content_type(
+                    [
+                        'application/json'
+                    ]
+                )
+            )
+            if _default_content_type is not None:
+                _header_params['Content-Type'] = _default_content_type
 
         # authentication setting
-        _auth_settings = ['OAuth2', 'bearerAuth']  # noqa: E501
+        _auth_settings: List[str] = [
+            'OAuth2', 
+            'bearerAuth'
+        ]
 
-        _response_types_map = {}
-
-        return self.api_client.call_api(
-            '/messages/{messageId}/stamps/{stampId}', 'POST',
-            _path_params,
-            _query_params,
-            _header_params,
+        return self.api_client.param_serialize(
+            method='POST',
+            resource_path='/messages/{messageId}/stamps/{stampId}',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
             body=_body_params,
             post_params=_form_params,
             files=_files,
-            response_types_map=_response_types_map,
             auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
             collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
+            _host=_host,
+            _request_auth=_request_auth
+        )
 
-    @validate_arguments
-    def create_pin(self, message_id : Annotated[StrictStr, Field(..., description="メッセージUUID")], **kwargs) -> MessagePin:  # noqa: E501
-        """ピン留めする  # noqa: E501
 
-        指定したメッセージをピン留めします。 アーカイブされているチャンネルのメッセージ・存在しないメッセージ・チャンネル当たりの上限数を超えたメッセージのピン留めはできません。  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.create_pin(message_id, async_req=True)
-        >>> result = thread.get()
 
-        :param message_id: メッセージUUID (required)
-        :type message_id: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request.
-               If one number provided, it will be total request
-               timeout. It can also be a pair (tuple) of
-               (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: MessagePin
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            message = "Error! Please call the create_pin_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
-            raise ValueError(message)
-        return self.create_pin_with_http_info(message_id, **kwargs)  # noqa: E501
+    @validate_call
+    def create_pin(
+        self,
+        message_id: Annotated[StrictStr, Field(description="メッセージUUID")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> MessagePin:
+        """ピン留めする
 
-    @validate_arguments
-    def create_pin_with_http_info(self, message_id : Annotated[StrictStr, Field(..., description="メッセージUUID")], **kwargs) -> ApiResponse:  # noqa: E501
-        """ピン留めする  # noqa: E501
-
-        指定したメッセージをピン留めします。 アーカイブされているチャンネルのメッセージ・存在しないメッセージ・チャンネル当たりの上限数を超えたメッセージのピン留めはできません。  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.create_pin_with_http_info(message_id, async_req=True)
-        >>> result = thread.get()
+        指定したメッセージをピン留めします。 アーカイブされているチャンネルのメッセージ・存在しないメッセージ・チャンネル当たりの上限数を超えたメッセージのピン留めはできません。
 
         :param message_id: メッセージUUID (required)
         :type message_id: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
                                  (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
         :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
         :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
         :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(MessagePin, status_code(int), headers(HTTPHeaderDict))
-        """
+        """ # noqa: E501
 
-        _params = locals()
-
-        _all_params = [
-            'message_id'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
+        _param = self._create_pin_serialize(
+            message_id=message_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
         )
 
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method create_pin" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['message_id']:
-            _path_params['messageId'] = _params['message_id']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # authentication setting
-        _auth_settings = ['OAuth2', 'bearerAuth']  # noqa: E501
-
-        _response_types_map = {
+        _response_types_map: Dict[str, Optional[str]] = {
             '201': "MessagePin",
             '400': None,
             '404': None,
         }
-
-        return self.api_client.call_api(
-            '/messages/{messageId}/pin', 'POST',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
             response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
+        ).data
 
-    @validate_arguments
-    def delete_message(self, message_id : Annotated[StrictStr, Field(..., description="メッセージUUID")], **kwargs) -> None:  # noqa: E501
-        """メッセージを削除  # noqa: E501
 
-        指定したメッセージを削除します。 自身が投稿したメッセージと自身が管理権限を持つWebhookとBOTが投稿したメッセージのみ削除することができます。 アーカイブされているチャンネルのメッセージを編集することは出来ません。  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
+    @validate_call
+    def create_pin_with_http_info(
+        self,
+        message_id: Annotated[StrictStr, Field(description="メッセージUUID")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[MessagePin]:
+        """ピン留めする
 
-        >>> thread = api.delete_message(message_id, async_req=True)
-        >>> result = thread.get()
-
-        :param message_id: メッセージUUID (required)
-        :type message_id: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request.
-               If one number provided, it will be total request
-               timeout. It can also be a pair (tuple) of
-               (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: None
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            message = "Error! Please call the delete_message_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
-            raise ValueError(message)
-        return self.delete_message_with_http_info(message_id, **kwargs)  # noqa: E501
-
-    @validate_arguments
-    def delete_message_with_http_info(self, message_id : Annotated[StrictStr, Field(..., description="メッセージUUID")], **kwargs) -> ApiResponse:  # noqa: E501
-        """メッセージを削除  # noqa: E501
-
-        指定したメッセージを削除します。 自身が投稿したメッセージと自身が管理権限を持つWebhookとBOTが投稿したメッセージのみ削除することができます。 アーカイブされているチャンネルのメッセージを編集することは出来ません。  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.delete_message_with_http_info(message_id, async_req=True)
-        >>> result = thread.get()
+        指定したメッセージをピン留めします。 アーカイブされているチャンネルのメッセージ・存在しないメッセージ・チャンネル当たりの上限数を超えたメッセージのピン留めはできません。
 
         :param message_id: メッセージUUID (required)
         :type message_id: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
                                  (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
         :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
         :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
         :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: None
-        """
+        """ # noqa: E501
 
-        _params = locals()
-
-        _all_params = [
-            'message_id'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
+        _param = self._create_pin_serialize(
+            message_id=message_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
         )
 
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method delete_message" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['message_id']:
-            _path_params['messageId'] = _params['message_id']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # authentication setting
-        _auth_settings = ['OAuth2', 'bearerAuth']  # noqa: E501
-
-        _response_types_map = {}
-
-        return self.api_client.call_api(
-            '/messages/{messageId}', 'DELETE',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
+        _response_types_map: Dict[str, Optional[str]] = {
+            '201': "MessagePin",
+            '400': None,
+            '404': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
             response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
+        )
 
-    @validate_arguments
-    def edit_message(self, message_id : Annotated[StrictStr, Field(..., description="メッセージUUID")], post_message_request : Optional[PostMessageRequest] = None, **kwargs) -> None:  # noqa: E501
-        """メッセージを編集  # noqa: E501
 
-        指定したメッセージを編集します。 自身が投稿したメッセージのみ編集することができます。 アーカイブされているチャンネルのメッセージを編集することは出来ません。  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
+    @validate_call
+    def create_pin_without_preload_content(
+        self,
+        message_id: Annotated[StrictStr, Field(description="メッセージUUID")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """ピン留めする
 
-        >>> thread = api.edit_message(message_id, post_message_request, async_req=True)
-        >>> result = thread.get()
-
-        :param message_id: メッセージUUID (required)
-        :type message_id: str
-        :param post_message_request:
-        :type post_message_request: PostMessageRequest
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request.
-               If one number provided, it will be total request
-               timeout. It can also be a pair (tuple) of
-               (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: None
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            message = "Error! Please call the edit_message_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
-            raise ValueError(message)
-        return self.edit_message_with_http_info(message_id, post_message_request, **kwargs)  # noqa: E501
-
-    @validate_arguments
-    def edit_message_with_http_info(self, message_id : Annotated[StrictStr, Field(..., description="メッセージUUID")], post_message_request : Optional[PostMessageRequest] = None, **kwargs) -> ApiResponse:  # noqa: E501
-        """メッセージを編集  # noqa: E501
-
-        指定したメッセージを編集します。 自身が投稿したメッセージのみ編集することができます。 アーカイブされているチャンネルのメッセージを編集することは出来ません。  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.edit_message_with_http_info(message_id, post_message_request, async_req=True)
-        >>> result = thread.get()
+        指定したメッセージをピン留めします。 アーカイブされているチャンネルのメッセージ・存在しないメッセージ・チャンネル当たりの上限数を超えたメッセージのピン留めはできません。
 
         :param message_id: メッセージUUID (required)
         :type message_id: str
-        :param post_message_request:
-        :type post_message_request: PostMessageRequest
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
                                  (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
         :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
         :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
         :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: None
-        """
+        """ # noqa: E501
 
-        _params = locals()
-
-        _all_params = [
-            'message_id',
-            'post_message_request'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
+        _param = self._create_pin_serialize(
+            message_id=message_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
         )
 
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method edit_message" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['message_id']:
-            _path_params['messageId'] = _params['message_id']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        if _params['post_message_request'] is not None:
-            _body_params = _params['post_message_request']
-
-        # set the HTTP header `Content-Type`
-        _content_types_list = _params.get('_content_type',
-            self.api_client.select_header_content_type(
-                ['application/json']))
-        if _content_types_list:
-                _header_params['Content-Type'] = _content_types_list
-
-        # authentication setting
-        _auth_settings = ['OAuth2', 'bearerAuth']  # noqa: E501
-
-        _response_types_map = {}
-
-        return self.api_client.call_api(
-            '/messages/{messageId}', 'PUT',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_arguments
-    def get_direct_messages(self, user_id : Annotated[StrictStr, Field(..., description="ユーザーUUID")], limit : Annotated[Optional[conint(strict=True, le=200, ge=1)], Field(description="取得する件数")] = None, offset : Annotated[Optional[StrictInt], Field(description="取得するオフセット")] = None, since : Annotated[Optional[datetime], Field(description="取得する時間範囲の開始日時")] = None, until : Annotated[Optional[datetime], Field(description="取得する時間範囲の終了日時")] = None, inclusive : Annotated[Optional[StrictBool], Field(description="範囲の端を含めるかどうか")] = None, order : Annotated[Optional[StrictStr], Field(description="昇順か降順か")] = None, **kwargs) -> List[Message]:  # noqa: E501
-        """ダイレクトメッセージのリストを取得  # noqa: E501
-
-        指定したユーザーとのダイレクトメッセージのリストを取得します。  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_direct_messages(user_id, limit, offset, since, until, inclusive, order, async_req=True)
-        >>> result = thread.get()
-
-        :param user_id: ユーザーUUID (required)
-        :type user_id: str
-        :param limit: 取得する件数
-        :type limit: int
-        :param offset: 取得するオフセット
-        :type offset: int
-        :param since: 取得する時間範囲の開始日時
-        :type since: datetime
-        :param until: 取得する時間範囲の終了日時
-        :type until: datetime
-        :param inclusive: 範囲の端を含めるかどうか
-        :type inclusive: bool
-        :param order: 昇順か降順か
-        :type order: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request.
-               If one number provided, it will be total request
-               timeout. It can also be a pair (tuple) of
-               (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: List[Message]
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            message = "Error! Please call the get_direct_messages_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
-            raise ValueError(message)
-        return self.get_direct_messages_with_http_info(user_id, limit, offset, since, until, inclusive, order, **kwargs)  # noqa: E501
-
-    @validate_arguments
-    def get_direct_messages_with_http_info(self, user_id : Annotated[StrictStr, Field(..., description="ユーザーUUID")], limit : Annotated[Optional[conint(strict=True, le=200, ge=1)], Field(description="取得する件数")] = None, offset : Annotated[Optional[StrictInt], Field(description="取得するオフセット")] = None, since : Annotated[Optional[datetime], Field(description="取得する時間範囲の開始日時")] = None, until : Annotated[Optional[datetime], Field(description="取得する時間範囲の終了日時")] = None, inclusive : Annotated[Optional[StrictBool], Field(description="範囲の端を含めるかどうか")] = None, order : Annotated[Optional[StrictStr], Field(description="昇順か降順か")] = None, **kwargs) -> ApiResponse:  # noqa: E501
-        """ダイレクトメッセージのリストを取得  # noqa: E501
-
-        指定したユーザーとのダイレクトメッセージのリストを取得します。  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_direct_messages_with_http_info(user_id, limit, offset, since, until, inclusive, order, async_req=True)
-        >>> result = thread.get()
-
-        :param user_id: ユーザーUUID (required)
-        :type user_id: str
-        :param limit: 取得する件数
-        :type limit: int
-        :param offset: 取得するオフセット
-        :type offset: int
-        :param since: 取得する時間範囲の開始日時
-        :type since: datetime
-        :param until: 取得する時間範囲の終了日時
-        :type until: datetime
-        :param inclusive: 範囲の端を含めるかどうか
-        :type inclusive: bool
-        :param order: 昇順か降順か
-        :type order: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(List[Message], status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'user_id',
-            'limit',
-            'offset',
-            'since',
-            'until',
-            'inclusive',
-            'order'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
+        _response_types_map: Dict[str, Optional[str]] = {
+            '201': "MessagePin",
+            '400': None,
+            '404': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
         )
+        return response_data.response
 
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method get_direct_messages" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
 
-        _collection_formats = {}
+    def _create_pin_serialize(
+        self,
+        message_id,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[str, Union[str, bytes]] = {}
+        _body_params: Optional[bytes] = None
 
         # process the path parameters
-        _path_params = {}
-        if _params['user_id']:
-            _path_params['userId'] = _params['user_id']
-
-
+        if message_id is not None:
+            _path_params['messageId'] = message_id
         # process the query parameters
-        _query_params = []
-        if _params.get('limit') is not None:  # noqa: E501
-            _query_params.append(('limit', _params['limit']))
-
-        if _params.get('offset') is not None:  # noqa: E501
-            _query_params.append(('offset', _params['offset']))
-
-        if _params.get('since') is not None:  # noqa: E501
-            if isinstance(_params['since'], datetime):
-                _query_params.append(('since', _params['since'].strftime(self.api_client.configuration.datetime_format)))
-            else:
-                _query_params.append(('since', _params['since']))
-
-        if _params.get('until') is not None:  # noqa: E501
-            if isinstance(_params['until'], datetime):
-                _query_params.append(('until', _params['until'].strftime(self.api_client.configuration.datetime_format)))
-            else:
-                _query_params.append(('until', _params['until']))
-
-        if _params.get('inclusive') is not None:  # noqa: E501
-            _query_params.append(('inclusive', _params['inclusive']))
-
-        if _params.get('order') is not None:  # noqa: E501
-            _query_params.append(('order', _params['order']))
-
         # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
         # process the form parameters
-        _form_params = []
-        _files = {}
         # process the body parameter
-        _body_params = None
+
+
         # set the HTTP header `Accept`
         _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
+            [
+                'application/json'
+            ]
+        )
+
 
         # authentication setting
-        _auth_settings = ['OAuth2', 'bearerAuth']  # noqa: E501
+        _auth_settings: List[str] = [
+            'OAuth2', 
+            'bearerAuth'
+        ]
 
-        _response_types_map = {
+        return self.api_client.param_serialize(
+            method='POST',
+            resource_path='/messages/{messageId}/pin',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    def delete_message(
+        self,
+        message_id: Annotated[StrictStr, Field(description="メッセージUUID")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> None:
+        """メッセージを削除
+
+        指定したメッセージを削除します。 自身が投稿したメッセージと自身が管理権限を持つWebhookとBOTが投稿したメッセージのみ削除することができます。 アーカイブされているチャンネルのメッセージを編集することは出来ません。
+
+        :param message_id: メッセージUUID (required)
+        :type message_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._delete_message_serialize(
+            message_id=message_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '204': None,
+            '403': None,
+            '404': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    def delete_message_with_http_info(
+        self,
+        message_id: Annotated[StrictStr, Field(description="メッセージUUID")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[None]:
+        """メッセージを削除
+
+        指定したメッセージを削除します。 自身が投稿したメッセージと自身が管理権限を持つWebhookとBOTが投稿したメッセージのみ削除することができます。 アーカイブされているチャンネルのメッセージを編集することは出来ません。
+
+        :param message_id: メッセージUUID (required)
+        :type message_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._delete_message_serialize(
+            message_id=message_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '204': None,
+            '403': None,
+            '404': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    def delete_message_without_preload_content(
+        self,
+        message_id: Annotated[StrictStr, Field(description="メッセージUUID")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """メッセージを削除
+
+        指定したメッセージを削除します。 自身が投稿したメッセージと自身が管理権限を持つWebhookとBOTが投稿したメッセージのみ削除することができます。 アーカイブされているチャンネルのメッセージを編集することは出来ません。
+
+        :param message_id: メッセージUUID (required)
+        :type message_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._delete_message_serialize(
+            message_id=message_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '204': None,
+            '403': None,
+            '404': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _delete_message_serialize(
+        self,
+        message_id,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[str, Union[str, bytes]] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if message_id is not None:
+            _path_params['messageId'] = message_id
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'OAuth2', 
+            'bearerAuth'
+        ]
+
+        return self.api_client.param_serialize(
+            method='DELETE',
+            resource_path='/messages/{messageId}',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    def edit_message(
+        self,
+        message_id: Annotated[StrictStr, Field(description="メッセージUUID")],
+        post_message_request: Optional[PostMessageRequest] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> None:
+        """メッセージを編集
+
+        指定したメッセージを編集します。 自身が投稿したメッセージのみ編集することができます。 アーカイブされているチャンネルのメッセージを編集することは出来ません。
+
+        :param message_id: メッセージUUID (required)
+        :type message_id: str
+        :param post_message_request:
+        :type post_message_request: PostMessageRequest
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._edit_message_serialize(
+            message_id=message_id,
+            post_message_request=post_message_request,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '204': None,
+            '400': None,
+            '403': None,
+            '404': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    def edit_message_with_http_info(
+        self,
+        message_id: Annotated[StrictStr, Field(description="メッセージUUID")],
+        post_message_request: Optional[PostMessageRequest] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[None]:
+        """メッセージを編集
+
+        指定したメッセージを編集します。 自身が投稿したメッセージのみ編集することができます。 アーカイブされているチャンネルのメッセージを編集することは出来ません。
+
+        :param message_id: メッセージUUID (required)
+        :type message_id: str
+        :param post_message_request:
+        :type post_message_request: PostMessageRequest
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._edit_message_serialize(
+            message_id=message_id,
+            post_message_request=post_message_request,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '204': None,
+            '400': None,
+            '403': None,
+            '404': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    def edit_message_without_preload_content(
+        self,
+        message_id: Annotated[StrictStr, Field(description="メッセージUUID")],
+        post_message_request: Optional[PostMessageRequest] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """メッセージを編集
+
+        指定したメッセージを編集します。 自身が投稿したメッセージのみ編集することができます。 アーカイブされているチャンネルのメッセージを編集することは出来ません。
+
+        :param message_id: メッセージUUID (required)
+        :type message_id: str
+        :param post_message_request:
+        :type post_message_request: PostMessageRequest
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._edit_message_serialize(
+            message_id=message_id,
+            post_message_request=post_message_request,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '204': None,
+            '400': None,
+            '403': None,
+            '404': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _edit_message_serialize(
+        self,
+        message_id,
+        post_message_request,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[str, Union[str, bytes]] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if message_id is not None:
+            _path_params['messageId'] = message_id
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+        if post_message_request is not None:
+            _body_params = post_message_request
+
+
+
+        # set the HTTP header `Content-Type`
+        if _content_type:
+            _header_params['Content-Type'] = _content_type
+        else:
+            _default_content_type = (
+                self.api_client.select_header_content_type(
+                    [
+                        'application/json'
+                    ]
+                )
+            )
+            if _default_content_type is not None:
+                _header_params['Content-Type'] = _default_content_type
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'OAuth2', 
+            'bearerAuth'
+        ]
+
+        return self.api_client.param_serialize(
+            method='PUT',
+            resource_path='/messages/{messageId}',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    def get_direct_messages(
+        self,
+        user_id: Annotated[StrictStr, Field(description="ユーザーUUID")],
+        limit: Annotated[Optional[Annotated[int, Field(le=200, strict=True, ge=1)]], Field(description="取得する件数")] = None,
+        offset: Annotated[Optional[StrictInt], Field(description="取得するオフセット")] = None,
+        since: Annotated[Optional[datetime], Field(description="取得する時間範囲の開始日時")] = None,
+        until: Annotated[Optional[datetime], Field(description="取得する時間範囲の終了日時")] = None,
+        inclusive: Annotated[Optional[StrictBool], Field(description="範囲の端を含めるかどうか")] = None,
+        order: Annotated[Optional[StrictStr], Field(description="昇順か降順か")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> List[Message]:
+        """ダイレクトメッセージのリストを取得
+
+        指定したユーザーとのダイレクトメッセージのリストを取得します。
+
+        :param user_id: ユーザーUUID (required)
+        :type user_id: str
+        :param limit: 取得する件数
+        :type limit: int
+        :param offset: 取得するオフセット
+        :type offset: int
+        :param since: 取得する時間範囲の開始日時
+        :type since: datetime
+        :param until: 取得する時間範囲の終了日時
+        :type until: datetime
+        :param inclusive: 範囲の端を含めるかどうか
+        :type inclusive: bool
+        :param order: 昇順か降順か
+        :type order: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_direct_messages_serialize(
+            user_id=user_id,
+            limit=limit,
+            offset=offset,
+            since=since,
+            until=until,
+            inclusive=inclusive,
+            order=order,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
             '200': "List[Message]",
             '400': None,
             '404': None,
         }
-
-        return self.api_client.call_api(
-            '/users/{userId}/messages', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
             response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
+        ).data
 
-    @validate_arguments
-    def get_message(self, message_id : Annotated[StrictStr, Field(..., description="メッセージUUID")], **kwargs) -> Message:  # noqa: E501
-        """メッセージを取得  # noqa: E501
 
-        指定したメッセージを取得します。  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
+    @validate_call
+    def get_direct_messages_with_http_info(
+        self,
+        user_id: Annotated[StrictStr, Field(description="ユーザーUUID")],
+        limit: Annotated[Optional[Annotated[int, Field(le=200, strict=True, ge=1)]], Field(description="取得する件数")] = None,
+        offset: Annotated[Optional[StrictInt], Field(description="取得するオフセット")] = None,
+        since: Annotated[Optional[datetime], Field(description="取得する時間範囲の開始日時")] = None,
+        until: Annotated[Optional[datetime], Field(description="取得する時間範囲の終了日時")] = None,
+        inclusive: Annotated[Optional[StrictBool], Field(description="範囲の端を含めるかどうか")] = None,
+        order: Annotated[Optional[StrictStr], Field(description="昇順か降順か")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[List[Message]]:
+        """ダイレクトメッセージのリストを取得
 
-        >>> thread = api.get_message(message_id, async_req=True)
-        >>> result = thread.get()
+        指定したユーザーとのダイレクトメッセージのリストを取得します。
 
-        :param message_id: メッセージUUID (required)
-        :type message_id: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request.
-               If one number provided, it will be total request
-               timeout. It can also be a pair (tuple) of
-               (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: Message
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            message = "Error! Please call the get_message_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
-            raise ValueError(message)
-        return self.get_message_with_http_info(message_id, **kwargs)  # noqa: E501
-
-    @validate_arguments
-    def get_message_with_http_info(self, message_id : Annotated[StrictStr, Field(..., description="メッセージUUID")], **kwargs) -> ApiResponse:  # noqa: E501
-        """メッセージを取得  # noqa: E501
-
-        指定したメッセージを取得します。  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_message_with_http_info(message_id, async_req=True)
-        >>> result = thread.get()
-
-        :param message_id: メッセージUUID (required)
-        :type message_id: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
+        :param user_id: ユーザーUUID (required)
+        :type user_id: str
+        :param limit: 取得する件数
+        :type limit: int
+        :param offset: 取得するオフセット
+        :type offset: int
+        :param since: 取得する時間範囲の開始日時
+        :type since: datetime
+        :param until: 取得する時間範囲の終了日時
+        :type until: datetime
+        :param inclusive: 範囲の端を含めるかどうか
+        :type inclusive: bool
+        :param order: 昇順か降順か
+        :type order: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
                                  (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
         :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
         :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
         :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(Message, status_code(int), headers(HTTPHeaderDict))
-        """
+        """ # noqa: E501
 
-        _params = locals()
+        _param = self._get_direct_messages_serialize(
+            user_id=user_id,
+            limit=limit,
+            offset=offset,
+            since=since,
+            until=until,
+            inclusive=inclusive,
+            order=order,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
 
-        _all_params = [
-            'message_id'
-        ]
-        _all_params.extend(
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "List[Message]",
+            '400': None,
+            '404': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    def get_direct_messages_without_preload_content(
+        self,
+        user_id: Annotated[StrictStr, Field(description="ユーザーUUID")],
+        limit: Annotated[Optional[Annotated[int, Field(le=200, strict=True, ge=1)]], Field(description="取得する件数")] = None,
+        offset: Annotated[Optional[StrictInt], Field(description="取得するオフセット")] = None,
+        since: Annotated[Optional[datetime], Field(description="取得する時間範囲の開始日時")] = None,
+        until: Annotated[Optional[datetime], Field(description="取得する時間範囲の終了日時")] = None,
+        inclusive: Annotated[Optional[StrictBool], Field(description="範囲の端を含めるかどうか")] = None,
+        order: Annotated[Optional[StrictStr], Field(description="昇順か降順か")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """ダイレクトメッセージのリストを取得
+
+        指定したユーザーとのダイレクトメッセージのリストを取得します。
+
+        :param user_id: ユーザーUUID (required)
+        :type user_id: str
+        :param limit: 取得する件数
+        :type limit: int
+        :param offset: 取得するオフセット
+        :type offset: int
+        :param since: 取得する時間範囲の開始日時
+        :type since: datetime
+        :param until: 取得する時間範囲の終了日時
+        :type until: datetime
+        :param inclusive: 範囲の端を含めるかどうか
+        :type inclusive: bool
+        :param order: 昇順か降順か
+        :type order: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_direct_messages_serialize(
+            user_id=user_id,
+            limit=limit,
+            offset=offset,
+            since=since,
+            until=until,
+            inclusive=inclusive,
+            order=order,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "List[Message]",
+            '400': None,
+            '404': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _get_direct_messages_serialize(
+        self,
+        user_id,
+        limit,
+        offset,
+        since,
+        until,
+        inclusive,
+        order,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[str, Union[str, bytes]] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if user_id is not None:
+            _path_params['userId'] = user_id
+        # process the query parameters
+        if limit is not None:
+            
+            _query_params.append(('limit', limit))
+            
+        if offset is not None:
+            
+            _query_params.append(('offset', offset))
+            
+        if since is not None:
+            if isinstance(since, datetime):
+                _query_params.append(
+                    (
+                        'since',
+                        since.strftime(
+                            self.api_client.configuration.datetime_format
+                        )
+                    )
+                )
+            else:
+                _query_params.append(('since', since))
+            
+        if until is not None:
+            if isinstance(until, datetime):
+                _query_params.append(
+                    (
+                        'until',
+                        until.strftime(
+                            self.api_client.configuration.datetime_format
+                        )
+                    )
+                )
+            else:
+                _query_params.append(('until', until))
+            
+        if inclusive is not None:
+            
+            _query_params.append(('inclusive', inclusive))
+            
+        if order is not None:
+            
+            _query_params.append(('order', order))
+            
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
             [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
+                'application/json'
             ]
         )
 
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method get_message" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['message_id']:
-            _path_params['messageId'] = _params['message_id']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
 
         # authentication setting
-        _auth_settings = ['OAuth2', 'bearerAuth']  # noqa: E501
+        _auth_settings: List[str] = [
+            'OAuth2', 
+            'bearerAuth'
+        ]
 
-        _response_types_map = {
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/users/{userId}/messages',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    def get_message(
+        self,
+        message_id: Annotated[StrictStr, Field(description="メッセージUUID")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> Message:
+        """メッセージを取得
+
+        指定したメッセージを取得します。
+
+        :param message_id: メッセージUUID (required)
+        :type message_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_message_serialize(
+            message_id=message_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
             '200': "Message",
             '404': None,
         }
-
-        return self.api_client.call_api(
-            '/messages/{messageId}', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
             response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
+        ).data
 
-    @validate_arguments
-    def get_message_clips(self, message_id : Annotated[StrictStr, Field(..., description="メッセージUUID")], **kwargs) -> List[MessageClip]:  # noqa: E501
-        """自分のクリップを取得  # noqa: E501
 
-        対象のメッセージの自分のクリップの一覧を返します。  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
+    @validate_call
+    def get_message_with_http_info(
+        self,
+        message_id: Annotated[StrictStr, Field(description="メッセージUUID")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[Message]:
+        """メッセージを取得
 
-        >>> thread = api.get_message_clips(message_id, async_req=True)
-        >>> result = thread.get()
-
-        :param message_id: メッセージUUID (required)
-        :type message_id: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request.
-               If one number provided, it will be total request
-               timeout. It can also be a pair (tuple) of
-               (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: List[MessageClip]
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            message = "Error! Please call the get_message_clips_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
-            raise ValueError(message)
-        return self.get_message_clips_with_http_info(message_id, **kwargs)  # noqa: E501
-
-    @validate_arguments
-    def get_message_clips_with_http_info(self, message_id : Annotated[StrictStr, Field(..., description="メッセージUUID")], **kwargs) -> ApiResponse:  # noqa: E501
-        """自分のクリップを取得  # noqa: E501
-
-        対象のメッセージの自分のクリップの一覧を返します。  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_message_clips_with_http_info(message_id, async_req=True)
-        >>> result = thread.get()
+        指定したメッセージを取得します。
 
         :param message_id: メッセージUUID (required)
         :type message_id: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
                                  (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
         :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
         :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
         :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(List[MessageClip], status_code(int), headers(HTTPHeaderDict))
-        """
+        """ # noqa: E501
 
-        _params = locals()
+        _param = self._get_message_serialize(
+            message_id=message_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
 
-        _all_params = [
-            'message_id'
-        ]
-        _all_params.extend(
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "Message",
+            '404': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    def get_message_without_preload_content(
+        self,
+        message_id: Annotated[StrictStr, Field(description="メッセージUUID")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """メッセージを取得
+
+        指定したメッセージを取得します。
+
+        :param message_id: メッセージUUID (required)
+        :type message_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_message_serialize(
+            message_id=message_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "Message",
+            '404': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _get_message_serialize(
+        self,
+        message_id,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[str, Union[str, bytes]] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if message_id is not None:
+            _path_params['messageId'] = message_id
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
             [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
+                'application/json'
             ]
         )
 
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method get_message_clips" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['message_id']:
-            _path_params['messageId'] = _params['message_id']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
 
         # authentication setting
-        _auth_settings = ['OAuth2', 'bearerAuth']  # noqa: E501
+        _auth_settings: List[str] = [
+            'OAuth2', 
+            'bearerAuth'
+        ]
 
-        _response_types_map = {
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/messages/{messageId}',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    def get_message_clips(
+        self,
+        message_id: Annotated[StrictStr, Field(description="メッセージUUID")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> List[MessageClip]:
+        """自分のクリップを取得
+
+        対象のメッセージの自分のクリップの一覧を返します。
+
+        :param message_id: メッセージUUID (required)
+        :type message_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_message_clips_serialize(
+            message_id=message_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
             '200': "List[MessageClip]",
             '404': None,
         }
-
-        return self.api_client.call_api(
-            '/messages/{messageId}/clips', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
             response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
+        ).data
 
-    @validate_arguments
-    def get_message_stamps(self, message_id : Annotated[StrictStr, Field(..., description="メッセージUUID")], **kwargs) -> List[MessageStamp]:  # noqa: E501
-        """メッセージのスタンプリストを取得  # noqa: E501
 
-        指定したメッセージに押されているスタンプのリストを取得します。  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
+    @validate_call
+    def get_message_clips_with_http_info(
+        self,
+        message_id: Annotated[StrictStr, Field(description="メッセージUUID")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[List[MessageClip]]:
+        """自分のクリップを取得
 
-        >>> thread = api.get_message_stamps(message_id, async_req=True)
-        >>> result = thread.get()
-
-        :param message_id: メッセージUUID (required)
-        :type message_id: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request.
-               If one number provided, it will be total request
-               timeout. It can also be a pair (tuple) of
-               (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: List[MessageStamp]
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            message = "Error! Please call the get_message_stamps_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
-            raise ValueError(message)
-        return self.get_message_stamps_with_http_info(message_id, **kwargs)  # noqa: E501
-
-    @validate_arguments
-    def get_message_stamps_with_http_info(self, message_id : Annotated[StrictStr, Field(..., description="メッセージUUID")], **kwargs) -> ApiResponse:  # noqa: E501
-        """メッセージのスタンプリストを取得  # noqa: E501
-
-        指定したメッセージに押されているスタンプのリストを取得します。  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_message_stamps_with_http_info(message_id, async_req=True)
-        >>> result = thread.get()
+        対象のメッセージの自分のクリップの一覧を返します。
 
         :param message_id: メッセージUUID (required)
         :type message_id: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
                                  (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
         :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
         :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
         :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(List[MessageStamp], status_code(int), headers(HTTPHeaderDict))
-        """
+        """ # noqa: E501
 
-        _params = locals()
+        _param = self._get_message_clips_serialize(
+            message_id=message_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
 
-        _all_params = [
-            'message_id'
-        ]
-        _all_params.extend(
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "List[MessageClip]",
+            '404': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    def get_message_clips_without_preload_content(
+        self,
+        message_id: Annotated[StrictStr, Field(description="メッセージUUID")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """自分のクリップを取得
+
+        対象のメッセージの自分のクリップの一覧を返します。
+
+        :param message_id: メッセージUUID (required)
+        :type message_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_message_clips_serialize(
+            message_id=message_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "List[MessageClip]",
+            '404': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _get_message_clips_serialize(
+        self,
+        message_id,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[str, Union[str, bytes]] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if message_id is not None:
+            _path_params['messageId'] = message_id
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
             [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
+                'application/json'
             ]
         )
 
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method get_message_stamps" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['message_id']:
-            _path_params['messageId'] = _params['message_id']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
 
         # authentication setting
-        _auth_settings = ['OAuth2', 'bearerAuth']  # noqa: E501
+        _auth_settings: List[str] = [
+            'OAuth2', 
+            'bearerAuth'
+        ]
 
-        _response_types_map = {
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/messages/{messageId}/clips',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    def get_message_stamps(
+        self,
+        message_id: Annotated[StrictStr, Field(description="メッセージUUID")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> List[MessageStamp]:
+        """メッセージのスタンプリストを取得
+
+        指定したメッセージに押されているスタンプのリストを取得します。
+
+        :param message_id: メッセージUUID (required)
+        :type message_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_message_stamps_serialize(
+            message_id=message_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
             '200': "List[MessageStamp]",
             '404': None,
         }
-
-        return self.api_client.call_api(
-            '/messages/{messageId}/stamps', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
             response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
+        ).data
 
-    @validate_arguments
-    def get_messages(self, channel_id : Annotated[StrictStr, Field(..., description="チャンネルUUID")], limit : Annotated[Optional[conint(strict=True, le=200, ge=1)], Field(description="取得する件数")] = None, offset : Annotated[Optional[StrictInt], Field(description="取得するオフセット")] = None, since : Annotated[Optional[datetime], Field(description="取得する時間範囲の開始日時")] = None, until : Annotated[Optional[datetime], Field(description="取得する時間範囲の終了日時")] = None, inclusive : Annotated[Optional[StrictBool], Field(description="範囲の端を含めるかどうか")] = None, order : Annotated[Optional[StrictStr], Field(description="昇順か降順か")] = None, **kwargs) -> List[Message]:  # noqa: E501
-        """チャンネルメッセージのリストを取得  # noqa: E501
 
-        指定したチャンネルのメッセージのリストを取得します。  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
+    @validate_call
+    def get_message_stamps_with_http_info(
+        self,
+        message_id: Annotated[StrictStr, Field(description="メッセージUUID")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[List[MessageStamp]]:
+        """メッセージのスタンプリストを取得
 
-        >>> thread = api.get_messages(channel_id, limit, offset, since, until, inclusive, order, async_req=True)
-        >>> result = thread.get()
+        指定したメッセージに押されているスタンプのリストを取得します。
 
-        :param channel_id: チャンネルUUID (required)
-        :type channel_id: str
-        :param limit: 取得する件数
-        :type limit: int
-        :param offset: 取得するオフセット
-        :type offset: int
-        :param since: 取得する時間範囲の開始日時
-        :type since: datetime
-        :param until: 取得する時間範囲の終了日時
-        :type until: datetime
-        :param inclusive: 範囲の端を含めるかどうか
-        :type inclusive: bool
-        :param order: 昇順か降順か
-        :type order: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request.
-               If one number provided, it will be total request
-               timeout. It can also be a pair (tuple) of
-               (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: List[Message]
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            message = "Error! Please call the get_messages_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
-            raise ValueError(message)
-        return self.get_messages_with_http_info(channel_id, limit, offset, since, until, inclusive, order, **kwargs)  # noqa: E501
-
-    @validate_arguments
-    def get_messages_with_http_info(self, channel_id : Annotated[StrictStr, Field(..., description="チャンネルUUID")], limit : Annotated[Optional[conint(strict=True, le=200, ge=1)], Field(description="取得する件数")] = None, offset : Annotated[Optional[StrictInt], Field(description="取得するオフセット")] = None, since : Annotated[Optional[datetime], Field(description="取得する時間範囲の開始日時")] = None, until : Annotated[Optional[datetime], Field(description="取得する時間範囲の終了日時")] = None, inclusive : Annotated[Optional[StrictBool], Field(description="範囲の端を含めるかどうか")] = None, order : Annotated[Optional[StrictStr], Field(description="昇順か降順か")] = None, **kwargs) -> ApiResponse:  # noqa: E501
-        """チャンネルメッセージのリストを取得  # noqa: E501
-
-        指定したチャンネルのメッセージのリストを取得します。  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_messages_with_http_info(channel_id, limit, offset, since, until, inclusive, order, async_req=True)
-        >>> result = thread.get()
-
-        :param channel_id: チャンネルUUID (required)
-        :type channel_id: str
-        :param limit: 取得する件数
-        :type limit: int
-        :param offset: 取得するオフセット
-        :type offset: int
-        :param since: 取得する時間範囲の開始日時
-        :type since: datetime
-        :param until: 取得する時間範囲の終了日時
-        :type until: datetime
-        :param inclusive: 範囲の端を含めるかどうか
-        :type inclusive: bool
-        :param order: 昇順か降順か
-        :type order: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
+        :param message_id: メッセージUUID (required)
+        :type message_id: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
                                  (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
         :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
         :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
         :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(List[Message], status_code(int), headers(HTTPHeaderDict))
-        """
+        """ # noqa: E501
 
-        _params = locals()
+        _param = self._get_message_stamps_serialize(
+            message_id=message_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
 
-        _all_params = [
-            'channel_id',
-            'limit',
-            'offset',
-            'since',
-            'until',
-            'inclusive',
-            'order'
-        ]
-        _all_params.extend(
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "List[MessageStamp]",
+            '404': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    def get_message_stamps_without_preload_content(
+        self,
+        message_id: Annotated[StrictStr, Field(description="メッセージUUID")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """メッセージのスタンプリストを取得
+
+        指定したメッセージに押されているスタンプのリストを取得します。
+
+        :param message_id: メッセージUUID (required)
+        :type message_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_message_stamps_serialize(
+            message_id=message_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "List[MessageStamp]",
+            '404': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _get_message_stamps_serialize(
+        self,
+        message_id,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[str, Union[str, bytes]] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if message_id is not None:
+            _path_params['messageId'] = message_id
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
             [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
+                'application/json'
             ]
         )
 
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method get_messages" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['channel_id']:
-            _path_params['channelId'] = _params['channel_id']
-
-
-        # process the query parameters
-        _query_params = []
-        if _params.get('limit') is not None:  # noqa: E501
-            _query_params.append(('limit', _params['limit']))
-
-        if _params.get('offset') is not None:  # noqa: E501
-            _query_params.append(('offset', _params['offset']))
-
-        if _params.get('since') is not None:  # noqa: E501
-            if isinstance(_params['since'], datetime):
-                _query_params.append(('since', _params['since'].strftime(self.api_client.configuration.datetime_format)))
-            else:
-                _query_params.append(('since', _params['since']))
-
-        if _params.get('until') is not None:  # noqa: E501
-            if isinstance(_params['until'], datetime):
-                _query_params.append(('until', _params['until'].strftime(self.api_client.configuration.datetime_format)))
-            else:
-                _query_params.append(('until', _params['until']))
-
-        if _params.get('inclusive') is not None:  # noqa: E501
-            _query_params.append(('inclusive', _params['inclusive']))
-
-        if _params.get('order') is not None:  # noqa: E501
-            _query_params.append(('order', _params['order']))
-
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
 
         # authentication setting
-        _auth_settings = ['OAuth2', 'bearerAuth']  # noqa: E501
+        _auth_settings: List[str] = [
+            'OAuth2', 
+            'bearerAuth'
+        ]
 
-        _response_types_map = {
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/messages/{messageId}/stamps',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    def get_messages(
+        self,
+        channel_id: Annotated[StrictStr, Field(description="チャンネルUUID")],
+        limit: Annotated[Optional[Annotated[int, Field(le=200, strict=True, ge=1)]], Field(description="取得する件数")] = None,
+        offset: Annotated[Optional[StrictInt], Field(description="取得するオフセット")] = None,
+        since: Annotated[Optional[datetime], Field(description="取得する時間範囲の開始日時")] = None,
+        until: Annotated[Optional[datetime], Field(description="取得する時間範囲の終了日時")] = None,
+        inclusive: Annotated[Optional[StrictBool], Field(description="範囲の端を含めるかどうか")] = None,
+        order: Annotated[Optional[StrictStr], Field(description="昇順か降順か")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> List[Message]:
+        """チャンネルメッセージのリストを取得
+
+        指定したチャンネルのメッセージのリストを取得します。
+
+        :param channel_id: チャンネルUUID (required)
+        :type channel_id: str
+        :param limit: 取得する件数
+        :type limit: int
+        :param offset: 取得するオフセット
+        :type offset: int
+        :param since: 取得する時間範囲の開始日時
+        :type since: datetime
+        :param until: 取得する時間範囲の終了日時
+        :type until: datetime
+        :param inclusive: 範囲の端を含めるかどうか
+        :type inclusive: bool
+        :param order: 昇順か降順か
+        :type order: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_messages_serialize(
+            channel_id=channel_id,
+            limit=limit,
+            offset=offset,
+            since=since,
+            until=until,
+            inclusive=inclusive,
+            order=order,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
             '200': "List[Message]",
             '400': None,
             '404': None,
         }
-
-        return self.api_client.call_api(
-            '/channels/{channelId}/messages', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
             response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
+        ).data
 
-    @validate_arguments
-    def get_pin(self, message_id : Annotated[StrictStr, Field(..., description="メッセージUUID")], **kwargs) -> MessagePin:  # noqa: E501
-        """ピン留めを取得  # noqa: E501
 
-        指定したメッセージのピン留め情報を取得します。  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
+    @validate_call
+    def get_messages_with_http_info(
+        self,
+        channel_id: Annotated[StrictStr, Field(description="チャンネルUUID")],
+        limit: Annotated[Optional[Annotated[int, Field(le=200, strict=True, ge=1)]], Field(description="取得する件数")] = None,
+        offset: Annotated[Optional[StrictInt], Field(description="取得するオフセット")] = None,
+        since: Annotated[Optional[datetime], Field(description="取得する時間範囲の開始日時")] = None,
+        until: Annotated[Optional[datetime], Field(description="取得する時間範囲の終了日時")] = None,
+        inclusive: Annotated[Optional[StrictBool], Field(description="範囲の端を含めるかどうか")] = None,
+        order: Annotated[Optional[StrictStr], Field(description="昇順か降順か")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[List[Message]]:
+        """チャンネルメッセージのリストを取得
 
-        >>> thread = api.get_pin(message_id, async_req=True)
-        >>> result = thread.get()
+        指定したチャンネルのメッセージのリストを取得します。
 
-        :param message_id: メッセージUUID (required)
-        :type message_id: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request.
-               If one number provided, it will be total request
-               timeout. It can also be a pair (tuple) of
-               (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: MessagePin
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            message = "Error! Please call the get_pin_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
-            raise ValueError(message)
-        return self.get_pin_with_http_info(message_id, **kwargs)  # noqa: E501
-
-    @validate_arguments
-    def get_pin_with_http_info(self, message_id : Annotated[StrictStr, Field(..., description="メッセージUUID")], **kwargs) -> ApiResponse:  # noqa: E501
-        """ピン留めを取得  # noqa: E501
-
-        指定したメッセージのピン留め情報を取得します。  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_pin_with_http_info(message_id, async_req=True)
-        >>> result = thread.get()
-
-        :param message_id: メッセージUUID (required)
-        :type message_id: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
+        :param channel_id: チャンネルUUID (required)
+        :type channel_id: str
+        :param limit: 取得する件数
+        :type limit: int
+        :param offset: 取得するオフセット
+        :type offset: int
+        :param since: 取得する時間範囲の開始日時
+        :type since: datetime
+        :param until: 取得する時間範囲の終了日時
+        :type until: datetime
+        :param inclusive: 範囲の端を含めるかどうか
+        :type inclusive: bool
+        :param order: 昇順か降順か
+        :type order: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
                                  (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
         :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
         :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
         :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(MessagePin, status_code(int), headers(HTTPHeaderDict))
-        """
+        """ # noqa: E501
 
-        _params = locals()
+        _param = self._get_messages_serialize(
+            channel_id=channel_id,
+            limit=limit,
+            offset=offset,
+            since=since,
+            until=until,
+            inclusive=inclusive,
+            order=order,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
 
-        _all_params = [
-            'message_id'
-        ]
-        _all_params.extend(
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "List[Message]",
+            '400': None,
+            '404': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    def get_messages_without_preload_content(
+        self,
+        channel_id: Annotated[StrictStr, Field(description="チャンネルUUID")],
+        limit: Annotated[Optional[Annotated[int, Field(le=200, strict=True, ge=1)]], Field(description="取得する件数")] = None,
+        offset: Annotated[Optional[StrictInt], Field(description="取得するオフセット")] = None,
+        since: Annotated[Optional[datetime], Field(description="取得する時間範囲の開始日時")] = None,
+        until: Annotated[Optional[datetime], Field(description="取得する時間範囲の終了日時")] = None,
+        inclusive: Annotated[Optional[StrictBool], Field(description="範囲の端を含めるかどうか")] = None,
+        order: Annotated[Optional[StrictStr], Field(description="昇順か降順か")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """チャンネルメッセージのリストを取得
+
+        指定したチャンネルのメッセージのリストを取得します。
+
+        :param channel_id: チャンネルUUID (required)
+        :type channel_id: str
+        :param limit: 取得する件数
+        :type limit: int
+        :param offset: 取得するオフセット
+        :type offset: int
+        :param since: 取得する時間範囲の開始日時
+        :type since: datetime
+        :param until: 取得する時間範囲の終了日時
+        :type until: datetime
+        :param inclusive: 範囲の端を含めるかどうか
+        :type inclusive: bool
+        :param order: 昇順か降順か
+        :type order: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_messages_serialize(
+            channel_id=channel_id,
+            limit=limit,
+            offset=offset,
+            since=since,
+            until=until,
+            inclusive=inclusive,
+            order=order,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "List[Message]",
+            '400': None,
+            '404': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _get_messages_serialize(
+        self,
+        channel_id,
+        limit,
+        offset,
+        since,
+        until,
+        inclusive,
+        order,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[str, Union[str, bytes]] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if channel_id is not None:
+            _path_params['channelId'] = channel_id
+        # process the query parameters
+        if limit is not None:
+            
+            _query_params.append(('limit', limit))
+            
+        if offset is not None:
+            
+            _query_params.append(('offset', offset))
+            
+        if since is not None:
+            if isinstance(since, datetime):
+                _query_params.append(
+                    (
+                        'since',
+                        since.strftime(
+                            self.api_client.configuration.datetime_format
+                        )
+                    )
+                )
+            else:
+                _query_params.append(('since', since))
+            
+        if until is not None:
+            if isinstance(until, datetime):
+                _query_params.append(
+                    (
+                        'until',
+                        until.strftime(
+                            self.api_client.configuration.datetime_format
+                        )
+                    )
+                )
+            else:
+                _query_params.append(('until', until))
+            
+        if inclusive is not None:
+            
+            _query_params.append(('inclusive', inclusive))
+            
+        if order is not None:
+            
+            _query_params.append(('order', order))
+            
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
             [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
+                'application/json'
             ]
         )
 
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method get_pin" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['message_id']:
-            _path_params['messageId'] = _params['message_id']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
 
         # authentication setting
-        _auth_settings = ['OAuth2', 'bearerAuth']  # noqa: E501
+        _auth_settings: List[str] = [
+            'OAuth2', 
+            'bearerAuth'
+        ]
 
-        _response_types_map = {
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/channels/{channelId}/messages',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    def get_pin(
+        self,
+        message_id: Annotated[StrictStr, Field(description="メッセージUUID")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> MessagePin:
+        """ピン留めを取得
+
+        指定したメッセージのピン留め情報を取得します。
+
+        :param message_id: メッセージUUID (required)
+        :type message_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_pin_serialize(
+            message_id=message_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
             '200': "MessagePin",
             '404': None,
         }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
 
-        return self.api_client.call_api(
-            '/messages/{messageId}/pin', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
+
+    @validate_call
+    def get_pin_with_http_info(
+        self,
+        message_id: Annotated[StrictStr, Field(description="メッセージUUID")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[MessagePin]:
+        """ピン留めを取得
+
+        指定したメッセージのピン留め情報を取得します。
+
+        :param message_id: メッセージUUID (required)
+        :type message_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_pin_serialize(
+            message_id=message_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "MessagePin",
+            '404': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    def get_pin_without_preload_content(
+        self,
+        message_id: Annotated[StrictStr, Field(description="メッセージUUID")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """ピン留めを取得
+
+        指定したメッセージのピン留め情報を取得します。
+
+        :param message_id: メッセージUUID (required)
+        :type message_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_pin_serialize(
+            message_id=message_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "MessagePin",
+            '404': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _get_pin_serialize(
+        self,
+        message_id,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[str, Union[str, bytes]] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if message_id is not None:
+            _path_params['messageId'] = message_id
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            [
+                'application/json'
+            ]
+        )
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'OAuth2', 
+            'bearerAuth'
+        ]
+
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/messages/{messageId}/pin',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
             body=_body_params,
             post_params=_form_params,
             files=_files,
-            response_types_map=_response_types_map,
             auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
             collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
+            _host=_host,
+            _request_auth=_request_auth
+        )
 
-    @validate_arguments
-    def post_direct_message(self, user_id : Annotated[StrictStr, Field(..., description="ユーザーUUID")], post_message_request : Optional[PostMessageRequest] = None, **kwargs) -> Message:  # noqa: E501
-        """ダイレクトメッセージを送信  # noqa: E501
 
-        指定したユーザーにダイレクトメッセージを送信します。  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.post_direct_message(user_id, post_message_request, async_req=True)
-        >>> result = thread.get()
+
+    @validate_call
+    def post_direct_message(
+        self,
+        user_id: Annotated[StrictStr, Field(description="ユーザーUUID")],
+        post_message_request: Optional[PostMessageRequest] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> Message:
+        """ダイレクトメッセージを送信
+
+        指定したユーザーにダイレクトメッセージを送信します。
 
         :param user_id: ユーザーUUID (required)
         :type user_id: str
         :param post_message_request:
         :type post_message_request: PostMessageRequest
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request.
-               If one number provided, it will be total request
-               timeout. It can also be a pair (tuple) of
-               (connection, read) timeouts.
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
         :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: Message
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            message = "Error! Please call the post_direct_message_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
-            raise ValueError(message)
-        return self.post_direct_message_with_http_info(user_id, post_message_request, **kwargs)  # noqa: E501
+        """ # noqa: E501
 
-    @validate_arguments
-    def post_direct_message_with_http_info(self, user_id : Annotated[StrictStr, Field(..., description="ユーザーUUID")], post_message_request : Optional[PostMessageRequest] = None, **kwargs) -> ApiResponse:  # noqa: E501
-        """ダイレクトメッセージを送信  # noqa: E501
+        _param = self._post_direct_message_serialize(
+            user_id=user_id,
+            post_message_request=post_message_request,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
 
-        指定したユーザーにダイレクトメッセージを送信します。  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
+        _response_types_map: Dict[str, Optional[str]] = {
+            '201': "Message",
+            '400': None,
+            '404': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
 
-        >>> thread = api.post_direct_message_with_http_info(user_id, post_message_request, async_req=True)
-        >>> result = thread.get()
+
+    @validate_call
+    def post_direct_message_with_http_info(
+        self,
+        user_id: Annotated[StrictStr, Field(description="ユーザーUUID")],
+        post_message_request: Optional[PostMessageRequest] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[Message]:
+        """ダイレクトメッセージを送信
+
+        指定したユーザーにダイレクトメッセージを送信します。
 
         :param user_id: ユーザーUUID (required)
         :type user_id: str
         :param post_message_request:
         :type post_message_request: PostMessageRequest
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
                                  (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
         :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
         :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
         :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(Message, status_code(int), headers(HTTPHeaderDict))
-        """
+        """ # noqa: E501
 
-        _params = locals()
-
-        _all_params = [
-            'user_id',
-            'post_message_request'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
+        _param = self._post_direct_message_serialize(
+            user_id=user_id,
+            post_message_request=post_message_request,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
         )
 
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method post_direct_message" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['user_id']:
-            _path_params['userId'] = _params['user_id']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        if _params['post_message_request'] is not None:
-            _body_params = _params['post_message_request']
-
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # set the HTTP header `Content-Type`
-        _content_types_list = _params.get('_content_type',
-            self.api_client.select_header_content_type(
-                ['application/json']))
-        if _content_types_list:
-                _header_params['Content-Type'] = _content_types_list
-
-        # authentication setting
-        _auth_settings = ['OAuth2', 'bearerAuth']  # noqa: E501
-
-        _response_types_map = {
+        _response_types_map: Dict[str, Optional[str]] = {
             '201': "Message",
             '400': None,
             '404': None,
         }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
 
-        return self.api_client.call_api(
-            '/users/{userId}/messages', 'POST',
-            _path_params,
-            _query_params,
-            _header_params,
+
+    @validate_call
+    def post_direct_message_without_preload_content(
+        self,
+        user_id: Annotated[StrictStr, Field(description="ユーザーUUID")],
+        post_message_request: Optional[PostMessageRequest] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """ダイレクトメッセージを送信
+
+        指定したユーザーにダイレクトメッセージを送信します。
+
+        :param user_id: ユーザーUUID (required)
+        :type user_id: str
+        :param post_message_request:
+        :type post_message_request: PostMessageRequest
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._post_direct_message_serialize(
+            user_id=user_id,
+            post_message_request=post_message_request,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '201': "Message",
+            '400': None,
+            '404': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _post_direct_message_serialize(
+        self,
+        user_id,
+        post_message_request,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[str, Union[str, bytes]] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if user_id is not None:
+            _path_params['userId'] = user_id
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+        if post_message_request is not None:
+            _body_params = post_message_request
+
+
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            [
+                'application/json'
+            ]
+        )
+
+        # set the HTTP header `Content-Type`
+        if _content_type:
+            _header_params['Content-Type'] = _content_type
+        else:
+            _default_content_type = (
+                self.api_client.select_header_content_type(
+                    [
+                        'application/json'
+                    ]
+                )
+            )
+            if _default_content_type is not None:
+                _header_params['Content-Type'] = _default_content_type
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'OAuth2', 
+            'bearerAuth'
+        ]
+
+        return self.api_client.param_serialize(
+            method='POST',
+            resource_path='/users/{userId}/messages',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
             body=_body_params,
             post_params=_form_params,
             files=_files,
-            response_types_map=_response_types_map,
             auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
             collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
+            _host=_host,
+            _request_auth=_request_auth
+        )
 
-    @validate_arguments
-    def post_message(self, channel_id : Annotated[StrictStr, Field(..., description="チャンネルUUID")], post_message_request : Optional[PostMessageRequest] = None, **kwargs) -> Message:  # noqa: E501
-        """チャンネルにメッセージを投稿  # noqa: E501
 
-        指定したチャンネルにメッセージを投稿します。 embedをtrueに指定すると、メッセージ埋め込みが自動で行われます。 アーカイブされているチャンネルに投稿することはできません。  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.post_message(channel_id, post_message_request, async_req=True)
-        >>> result = thread.get()
+
+    @validate_call
+    def post_message(
+        self,
+        channel_id: Annotated[StrictStr, Field(description="チャンネルUUID")],
+        post_message_request: Optional[PostMessageRequest] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> Message:
+        """チャンネルにメッセージを投稿
+
+        指定したチャンネルにメッセージを投稿します。 embedをtrueに指定すると、メッセージ埋め込みが自動で行われます。 アーカイブされているチャンネルに投稿することはできません。
 
         :param channel_id: チャンネルUUID (required)
         :type channel_id: str
         :param post_message_request: 
         :type post_message_request: PostMessageRequest
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request.
-               If one number provided, it will be total request
-               timeout. It can also be a pair (tuple) of
-               (connection, read) timeouts.
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
         :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: Message
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            message = "Error! Please call the post_message_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
-            raise ValueError(message)
-        return self.post_message_with_http_info(channel_id, post_message_request, **kwargs)  # noqa: E501
+        """ # noqa: E501
 
-    @validate_arguments
-    def post_message_with_http_info(self, channel_id : Annotated[StrictStr, Field(..., description="チャンネルUUID")], post_message_request : Optional[PostMessageRequest] = None, **kwargs) -> ApiResponse:  # noqa: E501
-        """チャンネルにメッセージを投稿  # noqa: E501
+        _param = self._post_message_serialize(
+            channel_id=channel_id,
+            post_message_request=post_message_request,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
 
-        指定したチャンネルにメッセージを投稿します。 embedをtrueに指定すると、メッセージ埋め込みが自動で行われます。 アーカイブされているチャンネルに投稿することはできません。  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
+        _response_types_map: Dict[str, Optional[str]] = {
+            '201': "Message",
+            '400': None,
+            '404': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
 
-        >>> thread = api.post_message_with_http_info(channel_id, post_message_request, async_req=True)
-        >>> result = thread.get()
+
+    @validate_call
+    def post_message_with_http_info(
+        self,
+        channel_id: Annotated[StrictStr, Field(description="チャンネルUUID")],
+        post_message_request: Optional[PostMessageRequest] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[Message]:
+        """チャンネルにメッセージを投稿
+
+        指定したチャンネルにメッセージを投稿します。 embedをtrueに指定すると、メッセージ埋め込みが自動で行われます。 アーカイブされているチャンネルに投稿することはできません。
 
         :param channel_id: チャンネルUUID (required)
         :type channel_id: str
         :param post_message_request: 
         :type post_message_request: PostMessageRequest
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
                                  (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
         :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
         :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
         :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(Message, status_code(int), headers(HTTPHeaderDict))
-        """
+        """ # noqa: E501
 
-        _params = locals()
-
-        _all_params = [
-            'channel_id',
-            'post_message_request'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
+        _param = self._post_message_serialize(
+            channel_id=channel_id,
+            post_message_request=post_message_request,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
         )
 
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method post_message" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['channel_id']:
-            _path_params['channelId'] = _params['channel_id']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        if _params['post_message_request'] is not None:
-            _body_params = _params['post_message_request']
-
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # set the HTTP header `Content-Type`
-        _content_types_list = _params.get('_content_type',
-            self.api_client.select_header_content_type(
-                ['application/json']))
-        if _content_types_list:
-                _header_params['Content-Type'] = _content_types_list
-
-        # authentication setting
-        _auth_settings = ['OAuth2', 'bearerAuth']  # noqa: E501
-
-        _response_types_map = {
+        _response_types_map: Dict[str, Optional[str]] = {
             '201': "Message",
             '400': None,
             '404': None,
         }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
 
-        return self.api_client.call_api(
-            '/channels/{channelId}/messages', 'POST',
-            _path_params,
-            _query_params,
-            _header_params,
+
+    @validate_call
+    def post_message_without_preload_content(
+        self,
+        channel_id: Annotated[StrictStr, Field(description="チャンネルUUID")],
+        post_message_request: Optional[PostMessageRequest] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """チャンネルにメッセージを投稿
+
+        指定したチャンネルにメッセージを投稿します。 embedをtrueに指定すると、メッセージ埋め込みが自動で行われます。 アーカイブされているチャンネルに投稿することはできません。
+
+        :param channel_id: チャンネルUUID (required)
+        :type channel_id: str
+        :param post_message_request: 
+        :type post_message_request: PostMessageRequest
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._post_message_serialize(
+            channel_id=channel_id,
+            post_message_request=post_message_request,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '201': "Message",
+            '400': None,
+            '404': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _post_message_serialize(
+        self,
+        channel_id,
+        post_message_request,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[str, Union[str, bytes]] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if channel_id is not None:
+            _path_params['channelId'] = channel_id
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+        if post_message_request is not None:
+            _body_params = post_message_request
+
+
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            [
+                'application/json'
+            ]
+        )
+
+        # set the HTTP header `Content-Type`
+        if _content_type:
+            _header_params['Content-Type'] = _content_type
+        else:
+            _default_content_type = (
+                self.api_client.select_header_content_type(
+                    [
+                        'application/json'
+                    ]
+                )
+            )
+            if _default_content_type is not None:
+                _header_params['Content-Type'] = _default_content_type
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'OAuth2', 
+            'bearerAuth'
+        ]
+
+        return self.api_client.param_serialize(
+            method='POST',
+            resource_path='/channels/{channelId}/messages',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
             body=_body_params,
             post_params=_form_params,
             files=_files,
-            response_types_map=_response_types_map,
             auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
             collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
+            _host=_host,
+            _request_auth=_request_auth
+        )
 
-    @validate_arguments
-    def remove_message_stamp(self, message_id : Annotated[StrictStr, Field(..., description="メッセージUUID")], stamp_id : Annotated[StrictStr, Field(..., description="スタンプUUID")], **kwargs) -> None:  # noqa: E501
-        """スタンプを消す  # noqa: E501
 
-        指定したメッセージから指定した自身が押したスタンプを削除します。  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.remove_message_stamp(message_id, stamp_id, async_req=True)
-        >>> result = thread.get()
+
+    @validate_call
+    def remove_message_stamp(
+        self,
+        message_id: Annotated[StrictStr, Field(description="メッセージUUID")],
+        stamp_id: Annotated[StrictStr, Field(description="スタンプUUID")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> None:
+        """スタンプを消す
+
+        指定したメッセージから指定した自身が押したスタンプを削除します。
 
         :param message_id: メッセージUUID (required)
         :type message_id: str
         :param stamp_id: スタンプUUID (required)
         :type stamp_id: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request.
-               If one number provided, it will be total request
-               timeout. It can also be a pair (tuple) of
-               (connection, read) timeouts.
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
         :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: None
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            message = "Error! Please call the remove_message_stamp_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
-            raise ValueError(message)
-        return self.remove_message_stamp_with_http_info(message_id, stamp_id, **kwargs)  # noqa: E501
+        """ # noqa: E501
 
-    @validate_arguments
-    def remove_message_stamp_with_http_info(self, message_id : Annotated[StrictStr, Field(..., description="メッセージUUID")], stamp_id : Annotated[StrictStr, Field(..., description="スタンプUUID")], **kwargs) -> ApiResponse:  # noqa: E501
-        """スタンプを消す  # noqa: E501
+        _param = self._remove_message_stamp_serialize(
+            message_id=message_id,
+            stamp_id=stamp_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
 
-        指定したメッセージから指定した自身が押したスタンプを削除します。  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
+        _response_types_map: Dict[str, Optional[str]] = {
+            '204': None,
+            '404': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
 
-        >>> thread = api.remove_message_stamp_with_http_info(message_id, stamp_id, async_req=True)
-        >>> result = thread.get()
+
+    @validate_call
+    def remove_message_stamp_with_http_info(
+        self,
+        message_id: Annotated[StrictStr, Field(description="メッセージUUID")],
+        stamp_id: Annotated[StrictStr, Field(description="スタンプUUID")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[None]:
+        """スタンプを消す
+
+        指定したメッセージから指定した自身が押したスタンプを削除します。
 
         :param message_id: メッセージUUID (required)
         :type message_id: str
         :param stamp_id: スタンプUUID (required)
         :type stamp_id: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
                                  (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
         :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
         :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
         :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: None
-        """
+        """ # noqa: E501
 
-        _params = locals()
-
-        _all_params = [
-            'message_id',
-            'stamp_id'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
+        _param = self._remove_message_stamp_serialize(
+            message_id=message_id,
+            stamp_id=stamp_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
         )
 
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method remove_message_stamp" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['message_id']:
-            _path_params['messageId'] = _params['message_id']
-
-        if _params['stamp_id']:
-            _path_params['stampId'] = _params['stamp_id']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # authentication setting
-        _auth_settings = ['OAuth2', 'bearerAuth']  # noqa: E501
-
-        _response_types_map = {}
-
-        return self.api_client.call_api(
-            '/messages/{messageId}/stamps/{stampId}', 'DELETE',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
+        _response_types_map: Dict[str, Optional[str]] = {
+            '204': None,
+            '404': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
             response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
+        )
 
-    @validate_arguments
-    def remove_pin(self, message_id : Annotated[StrictStr, Field(..., description="メッセージUUID")], **kwargs) -> None:  # noqa: E501
-        """ピン留めを外す  # noqa: E501
 
-        指定したメッセージのピン留めを外します。  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
+    @validate_call
+    def remove_message_stamp_without_preload_content(
+        self,
+        message_id: Annotated[StrictStr, Field(description="メッセージUUID")],
+        stamp_id: Annotated[StrictStr, Field(description="スタンプUUID")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """スタンプを消す
 
-        >>> thread = api.remove_pin(message_id, async_req=True)
-        >>> result = thread.get()
-
-        :param message_id: メッセージUUID (required)
-        :type message_id: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request.
-               If one number provided, it will be total request
-               timeout. It can also be a pair (tuple) of
-               (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: None
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            message = "Error! Please call the remove_pin_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
-            raise ValueError(message)
-        return self.remove_pin_with_http_info(message_id, **kwargs)  # noqa: E501
-
-    @validate_arguments
-    def remove_pin_with_http_info(self, message_id : Annotated[StrictStr, Field(..., description="メッセージUUID")], **kwargs) -> ApiResponse:  # noqa: E501
-        """ピン留めを外す  # noqa: E501
-
-        指定したメッセージのピン留めを外します。  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.remove_pin_with_http_info(message_id, async_req=True)
-        >>> result = thread.get()
+        指定したメッセージから指定した自身が押したスタンプを削除します。
 
         :param message_id: メッセージUUID (required)
         :type message_id: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
+        :param stamp_id: スタンプUUID (required)
+        :type stamp_id: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
                                  (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
         :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
         :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
         :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: None
-        """
+        """ # noqa: E501
 
-        _params = locals()
-
-        _all_params = [
-            'message_id'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
+        _param = self._remove_message_stamp_serialize(
+            message_id=message_id,
+            stamp_id=stamp_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
         )
 
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method remove_pin" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
+        _response_types_map: Dict[str, Optional[str]] = {
+            '204': None,
+            '404': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
 
-        _collection_formats = {}
+
+    def _remove_message_stamp_serialize(
+        self,
+        message_id,
+        stamp_id,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[str, Union[str, bytes]] = {}
+        _body_params: Optional[bytes] = None
 
         # process the path parameters
-        _path_params = {}
-        if _params['message_id']:
-            _path_params['messageId'] = _params['message_id']
-
-
+        if message_id is not None:
+            _path_params['messageId'] = message_id
+        if stamp_id is not None:
+            _path_params['stampId'] = stamp_id
         # process the query parameters
-        _query_params = []
         # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
         # process the form parameters
-        _form_params = []
-        _files = {}
         # process the body parameter
-        _body_params = None
+
+
+
+
         # authentication setting
-        _auth_settings = ['OAuth2', 'bearerAuth']  # noqa: E501
+        _auth_settings: List[str] = [
+            'OAuth2', 
+            'bearerAuth'
+        ]
 
-        _response_types_map = {}
-
-        return self.api_client.call_api(
-            '/messages/{messageId}/pin', 'DELETE',
-            _path_params,
-            _query_params,
-            _header_params,
+        return self.api_client.param_serialize(
+            method='DELETE',
+            resource_path='/messages/{messageId}/stamps/{stampId}',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
             body=_body_params,
             post_params=_form_params,
             files=_files,
-            response_types_map=_response_types_map,
             auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
             collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
+            _host=_host,
+            _request_auth=_request_auth
+        )
 
-    @validate_arguments
-    def search_messages(self, word : Annotated[Optional[StrictStr], Field(description="検索ワード Simple-Query-String-Syntaxをパースして検索します ")] = None, after : Annotated[Optional[datetime], Field(description="投稿日時が指定日時より後")] = None, before : Annotated[Optional[datetime], Field(description="投稿日時が指定日時より前")] = None, var_in : Annotated[Optional[StrictStr], Field(description="メッセージが投稿されたチャンネル")] = None, to : Annotated[Optional[StrictStr], Field(description="メンションされたユーザー")] = None, var_from : Annotated[Optional[StrictStr], Field(description="メッセージを投稿したユーザー")] = None, citation : Annotated[Optional[StrictStr], Field(description="引用しているメッセージ")] = None, bot : Annotated[Optional[StrictBool], Field(description="メッセージを投稿したユーザーがBotかどうか")] = None, has_url : Annotated[Optional[StrictBool], Field(description="メッセージがURLを含むか")] = None, has_attachments : Annotated[Optional[StrictBool], Field(description="メッセージが添付ファイルを含むか")] = None, has_image : Annotated[Optional[StrictBool], Field(description="メッセージが画像を含むか")] = None, has_video : Annotated[Optional[StrictBool], Field(description="メッセージが動画を含むか")] = None, has_audio : Annotated[Optional[StrictBool], Field(description="メッセージが音声ファイルを含むか")] = None, limit : Annotated[Optional[conint(strict=True, le=100, ge=1)], Field(description="検索結果から取得するメッセージの最大件数")] = None, offset : Annotated[Optional[conint(strict=True, le=9900, ge=0)], Field(description="検索結果から取得するメッセージのオフセット")] = None, sort : Annotated[Optional[StrictStr], Field(description="ソート順 (作成日時が新しい `createdAt`, 作成日時が古い `-createdAt`, 更新日時が新しい `updatedAt`, 更新日時が古い `-updatedAt`)")] = None, **kwargs) -> MessageSearchResult:  # noqa: E501
-        """メッセージを検索  # noqa: E501
 
-        メッセージを検索します。  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.search_messages(word, after, before, var_in, to, var_from, citation, bot, has_url, has_attachments, has_image, has_video, has_audio, limit, offset, sort, async_req=True)
-        >>> result = thread.get()
+
+    @validate_call
+    def remove_pin(
+        self,
+        message_id: Annotated[StrictStr, Field(description="メッセージUUID")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> None:
+        """ピン留めを外す
+
+        指定したメッセージのピン留めを外します。
+
+        :param message_id: メッセージUUID (required)
+        :type message_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._remove_pin_serialize(
+            message_id=message_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '204': None,
+            '400': None,
+            '404': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    def remove_pin_with_http_info(
+        self,
+        message_id: Annotated[StrictStr, Field(description="メッセージUUID")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[None]:
+        """ピン留めを外す
+
+        指定したメッセージのピン留めを外します。
+
+        :param message_id: メッセージUUID (required)
+        :type message_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._remove_pin_serialize(
+            message_id=message_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '204': None,
+            '400': None,
+            '404': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    def remove_pin_without_preload_content(
+        self,
+        message_id: Annotated[StrictStr, Field(description="メッセージUUID")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """ピン留めを外す
+
+        指定したメッセージのピン留めを外します。
+
+        :param message_id: メッセージUUID (required)
+        :type message_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._remove_pin_serialize(
+            message_id=message_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '204': None,
+            '400': None,
+            '404': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _remove_pin_serialize(
+        self,
+        message_id,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[str, Union[str, bytes]] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if message_id is not None:
+            _path_params['messageId'] = message_id
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'OAuth2', 
+            'bearerAuth'
+        ]
+
+        return self.api_client.param_serialize(
+            method='DELETE',
+            resource_path='/messages/{messageId}/pin',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    def search_messages(
+        self,
+        word: Annotated[Optional[StrictStr], Field(description="検索ワード Simple-Query-String-Syntaxをパースして検索します ")] = None,
+        after: Annotated[Optional[datetime], Field(description="投稿日時が指定日時より後")] = None,
+        before: Annotated[Optional[datetime], Field(description="投稿日時が指定日時より前")] = None,
+        var_in: Annotated[Optional[StrictStr], Field(description="メッセージが投稿されたチャンネル")] = None,
+        to: Annotated[Optional[StrictStr], Field(description="メンションされたユーザー")] = None,
+        var_from: Annotated[Optional[StrictStr], Field(description="メッセージを投稿したユーザー")] = None,
+        citation: Annotated[Optional[StrictStr], Field(description="引用しているメッセージ")] = None,
+        bot: Annotated[Optional[StrictBool], Field(description="メッセージを投稿したユーザーがBotかどうか")] = None,
+        has_url: Annotated[Optional[StrictBool], Field(description="メッセージがURLを含むか")] = None,
+        has_attachments: Annotated[Optional[StrictBool], Field(description="メッセージが添付ファイルを含むか")] = None,
+        has_image: Annotated[Optional[StrictBool], Field(description="メッセージが画像を含むか")] = None,
+        has_video: Annotated[Optional[StrictBool], Field(description="メッセージが動画を含むか")] = None,
+        has_audio: Annotated[Optional[StrictBool], Field(description="メッセージが音声ファイルを含むか")] = None,
+        limit: Annotated[Optional[Annotated[int, Field(le=100, strict=True, ge=1)]], Field(description="検索結果から取得するメッセージの最大件数")] = None,
+        offset: Annotated[Optional[Annotated[int, Field(le=9900, strict=True, ge=0)]], Field(description="検索結果から取得するメッセージのオフセット")] = None,
+        sort: Annotated[Optional[StrictStr], Field(description="ソート順 (作成日時が新しい `createdAt`, 作成日時が古い `-createdAt`, 更新日時が新しい `updatedAt`, 更新日時が古い `-updatedAt`)")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> MessageSearchResult:
+        """メッセージを検索
+
+        メッセージを検索します。
 
         :param word: 検索ワード Simple-Query-String-Syntaxをパースして検索します 
         :type word: str
@@ -2224,227 +4164,473 @@ class MessageApi:
         :type offset: int
         :param sort: ソート順 (作成日時が新しい `createdAt`, 作成日時が古い `-createdAt`, 更新日時が新しい `updatedAt`, 更新日時が古い `-updatedAt`)
         :type sort: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request.
-               If one number provided, it will be total request
-               timeout. It can also be a pair (tuple) of
-               (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: MessageSearchResult
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            message = "Error! Please call the search_messages_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
-            raise ValueError(message)
-        return self.search_messages_with_http_info(word, after, before, var_in, to, var_from, citation, bot, has_url, has_attachments, has_image, has_video, has_audio, limit, offset, sort, **kwargs)  # noqa: E501
-
-    @validate_arguments
-    def search_messages_with_http_info(self, word : Annotated[Optional[StrictStr], Field(description="検索ワード Simple-Query-String-Syntaxをパースして検索します ")] = None, after : Annotated[Optional[datetime], Field(description="投稿日時が指定日時より後")] = None, before : Annotated[Optional[datetime], Field(description="投稿日時が指定日時より前")] = None, var_in : Annotated[Optional[StrictStr], Field(description="メッセージが投稿されたチャンネル")] = None, to : Annotated[Optional[StrictStr], Field(description="メンションされたユーザー")] = None, var_from : Annotated[Optional[StrictStr], Field(description="メッセージを投稿したユーザー")] = None, citation : Annotated[Optional[StrictStr], Field(description="引用しているメッセージ")] = None, bot : Annotated[Optional[StrictBool], Field(description="メッセージを投稿したユーザーがBotかどうか")] = None, has_url : Annotated[Optional[StrictBool], Field(description="メッセージがURLを含むか")] = None, has_attachments : Annotated[Optional[StrictBool], Field(description="メッセージが添付ファイルを含むか")] = None, has_image : Annotated[Optional[StrictBool], Field(description="メッセージが画像を含むか")] = None, has_video : Annotated[Optional[StrictBool], Field(description="メッセージが動画を含むか")] = None, has_audio : Annotated[Optional[StrictBool], Field(description="メッセージが音声ファイルを含むか")] = None, limit : Annotated[Optional[conint(strict=True, le=100, ge=1)], Field(description="検索結果から取得するメッセージの最大件数")] = None, offset : Annotated[Optional[conint(strict=True, le=9900, ge=0)], Field(description="検索結果から取得するメッセージのオフセット")] = None, sort : Annotated[Optional[StrictStr], Field(description="ソート順 (作成日時が新しい `createdAt`, 作成日時が古い `-createdAt`, 更新日時が新しい `updatedAt`, 更新日時が古い `-updatedAt`)")] = None, **kwargs) -> ApiResponse:  # noqa: E501
-        """メッセージを検索  # noqa: E501
-
-        メッセージを検索します。  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.search_messages_with_http_info(word, after, before, var_in, to, var_from, citation, bot, has_url, has_attachments, has_image, has_video, has_audio, limit, offset, sort, async_req=True)
-        >>> result = thread.get()
-
-        :param word: 検索ワード Simple-Query-String-Syntaxをパースして検索します 
-        :type word: str
-        :param after: 投稿日時が指定日時より後
-        :type after: datetime
-        :param before: 投稿日時が指定日時より前
-        :type before: datetime
-        :param var_in: メッセージが投稿されたチャンネル
-        :type var_in: str
-        :param to: メンションされたユーザー
-        :type to: str
-        :param var_from: メッセージを投稿したユーザー
-        :type var_from: str
-        :param citation: 引用しているメッセージ
-        :type citation: str
-        :param bot: メッセージを投稿したユーザーがBotかどうか
-        :type bot: bool
-        :param has_url: メッセージがURLを含むか
-        :type has_url: bool
-        :param has_attachments: メッセージが添付ファイルを含むか
-        :type has_attachments: bool
-        :param has_image: メッセージが画像を含むか
-        :type has_image: bool
-        :param has_video: メッセージが動画を含むか
-        :type has_video: bool
-        :param has_audio: メッセージが音声ファイルを含むか
-        :type has_audio: bool
-        :param limit: 検索結果から取得するメッセージの最大件数
-        :type limit: int
-        :param offset: 検索結果から取得するメッセージのオフセット
-        :type offset: int
-        :param sort: ソート順 (作成日時が新しい `createdAt`, 作成日時が古い `-createdAt`, 更新日時が新しい `updatedAt`, 更新日時が古い `-updatedAt`)
-        :type sort: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
                                  (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
         :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
         :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
         :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(MessageSearchResult, status_code(int), headers(HTTPHeaderDict))
-        """
+        """ # noqa: E501
 
-        _params = locals()
-
-        _all_params = [
-            'word',
-            'after',
-            'before',
-            'var_in',
-            'to',
-            'var_from',
-            'citation',
-            'bot',
-            'has_url',
-            'has_attachments',
-            'has_image',
-            'has_video',
-            'has_audio',
-            'limit',
-            'offset',
-            'sort'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
+        _param = self._search_messages_serialize(
+            word=word,
+            after=after,
+            before=before,
+            var_in=var_in,
+            to=to,
+            var_from=var_from,
+            citation=citation,
+            bot=bot,
+            has_url=has_url,
+            has_attachments=has_attachments,
+            has_image=has_image,
+            has_video=has_video,
+            has_audio=has_audio,
+            limit=limit,
+            offset=offset,
+            sort=sort,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
         )
 
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method search_messages" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-
-        # process the query parameters
-        _query_params = []
-        if _params.get('word') is not None:  # noqa: E501
-            _query_params.append(('word', _params['word']))
-
-        if _params.get('after') is not None:  # noqa: E501
-            if isinstance(_params['after'], datetime):
-                _query_params.append(('after', _params['after'].strftime(self.api_client.configuration.datetime_format)))
-            else:
-                _query_params.append(('after', _params['after']))
-
-        if _params.get('before') is not None:  # noqa: E501
-            if isinstance(_params['before'], datetime):
-                _query_params.append(('before', _params['before'].strftime(self.api_client.configuration.datetime_format)))
-            else:
-                _query_params.append(('before', _params['before']))
-
-        if _params.get('var_in') is not None:  # noqa: E501
-            _query_params.append(('in', _params['var_in']))
-
-        if _params.get('to') is not None:  # noqa: E501
-            _query_params.append(('to', _params['to']))
-
-        if _params.get('var_from') is not None:  # noqa: E501
-            _query_params.append(('from', _params['var_from']))
-
-        if _params.get('citation') is not None:  # noqa: E501
-            _query_params.append(('citation', _params['citation']))
-
-        if _params.get('bot') is not None:  # noqa: E501
-            _query_params.append(('bot', _params['bot']))
-
-        if _params.get('has_url') is not None:  # noqa: E501
-            _query_params.append(('hasURL', _params['has_url']))
-
-        if _params.get('has_attachments') is not None:  # noqa: E501
-            _query_params.append(('hasAttachments', _params['has_attachments']))
-
-        if _params.get('has_image') is not None:  # noqa: E501
-            _query_params.append(('hasImage', _params['has_image']))
-
-        if _params.get('has_video') is not None:  # noqa: E501
-            _query_params.append(('hasVideo', _params['has_video']))
-
-        if _params.get('has_audio') is not None:  # noqa: E501
-            _query_params.append(('hasAudio', _params['has_audio']))
-
-        if _params.get('limit') is not None:  # noqa: E501
-            _query_params.append(('limit', _params['limit']))
-
-        if _params.get('offset') is not None:  # noqa: E501
-            _query_params.append(('offset', _params['offset']))
-
-        if _params.get('sort') is not None:  # noqa: E501
-            _query_params.append(('sort', _params['sort']))
-
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # authentication setting
-        _auth_settings = ['OAuth2', 'bearerAuth']  # noqa: E501
-
-        _response_types_map = {
+        _response_types_map: Dict[str, Optional[str]] = {
             '200': "MessageSearchResult",
             '400': None,
             '503': None,
         }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
 
-        return self.api_client.call_api(
-            '/messages', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
+
+    @validate_call
+    def search_messages_with_http_info(
+        self,
+        word: Annotated[Optional[StrictStr], Field(description="検索ワード Simple-Query-String-Syntaxをパースして検索します ")] = None,
+        after: Annotated[Optional[datetime], Field(description="投稿日時が指定日時より後")] = None,
+        before: Annotated[Optional[datetime], Field(description="投稿日時が指定日時より前")] = None,
+        var_in: Annotated[Optional[StrictStr], Field(description="メッセージが投稿されたチャンネル")] = None,
+        to: Annotated[Optional[StrictStr], Field(description="メンションされたユーザー")] = None,
+        var_from: Annotated[Optional[StrictStr], Field(description="メッセージを投稿したユーザー")] = None,
+        citation: Annotated[Optional[StrictStr], Field(description="引用しているメッセージ")] = None,
+        bot: Annotated[Optional[StrictBool], Field(description="メッセージを投稿したユーザーがBotかどうか")] = None,
+        has_url: Annotated[Optional[StrictBool], Field(description="メッセージがURLを含むか")] = None,
+        has_attachments: Annotated[Optional[StrictBool], Field(description="メッセージが添付ファイルを含むか")] = None,
+        has_image: Annotated[Optional[StrictBool], Field(description="メッセージが画像を含むか")] = None,
+        has_video: Annotated[Optional[StrictBool], Field(description="メッセージが動画を含むか")] = None,
+        has_audio: Annotated[Optional[StrictBool], Field(description="メッセージが音声ファイルを含むか")] = None,
+        limit: Annotated[Optional[Annotated[int, Field(le=100, strict=True, ge=1)]], Field(description="検索結果から取得するメッセージの最大件数")] = None,
+        offset: Annotated[Optional[Annotated[int, Field(le=9900, strict=True, ge=0)]], Field(description="検索結果から取得するメッセージのオフセット")] = None,
+        sort: Annotated[Optional[StrictStr], Field(description="ソート順 (作成日時が新しい `createdAt`, 作成日時が古い `-createdAt`, 更新日時が新しい `updatedAt`, 更新日時が古い `-updatedAt`)")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[MessageSearchResult]:
+        """メッセージを検索
+
+        メッセージを検索します。
+
+        :param word: 検索ワード Simple-Query-String-Syntaxをパースして検索します 
+        :type word: str
+        :param after: 投稿日時が指定日時より後
+        :type after: datetime
+        :param before: 投稿日時が指定日時より前
+        :type before: datetime
+        :param var_in: メッセージが投稿されたチャンネル
+        :type var_in: str
+        :param to: メンションされたユーザー
+        :type to: str
+        :param var_from: メッセージを投稿したユーザー
+        :type var_from: str
+        :param citation: 引用しているメッセージ
+        :type citation: str
+        :param bot: メッセージを投稿したユーザーがBotかどうか
+        :type bot: bool
+        :param has_url: メッセージがURLを含むか
+        :type has_url: bool
+        :param has_attachments: メッセージが添付ファイルを含むか
+        :type has_attachments: bool
+        :param has_image: メッセージが画像を含むか
+        :type has_image: bool
+        :param has_video: メッセージが動画を含むか
+        :type has_video: bool
+        :param has_audio: メッセージが音声ファイルを含むか
+        :type has_audio: bool
+        :param limit: 検索結果から取得するメッセージの最大件数
+        :type limit: int
+        :param offset: 検索結果から取得するメッセージのオフセット
+        :type offset: int
+        :param sort: ソート順 (作成日時が新しい `createdAt`, 作成日時が古い `-createdAt`, 更新日時が新しい `updatedAt`, 更新日時が古い `-updatedAt`)
+        :type sort: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._search_messages_serialize(
+            word=word,
+            after=after,
+            before=before,
+            var_in=var_in,
+            to=to,
+            var_from=var_from,
+            citation=citation,
+            bot=bot,
+            has_url=has_url,
+            has_attachments=has_attachments,
+            has_image=has_image,
+            has_video=has_video,
+            has_audio=has_audio,
+            limit=limit,
+            offset=offset,
+            sort=sort,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "MessageSearchResult",
+            '400': None,
+            '503': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    def search_messages_without_preload_content(
+        self,
+        word: Annotated[Optional[StrictStr], Field(description="検索ワード Simple-Query-String-Syntaxをパースして検索します ")] = None,
+        after: Annotated[Optional[datetime], Field(description="投稿日時が指定日時より後")] = None,
+        before: Annotated[Optional[datetime], Field(description="投稿日時が指定日時より前")] = None,
+        var_in: Annotated[Optional[StrictStr], Field(description="メッセージが投稿されたチャンネル")] = None,
+        to: Annotated[Optional[StrictStr], Field(description="メンションされたユーザー")] = None,
+        var_from: Annotated[Optional[StrictStr], Field(description="メッセージを投稿したユーザー")] = None,
+        citation: Annotated[Optional[StrictStr], Field(description="引用しているメッセージ")] = None,
+        bot: Annotated[Optional[StrictBool], Field(description="メッセージを投稿したユーザーがBotかどうか")] = None,
+        has_url: Annotated[Optional[StrictBool], Field(description="メッセージがURLを含むか")] = None,
+        has_attachments: Annotated[Optional[StrictBool], Field(description="メッセージが添付ファイルを含むか")] = None,
+        has_image: Annotated[Optional[StrictBool], Field(description="メッセージが画像を含むか")] = None,
+        has_video: Annotated[Optional[StrictBool], Field(description="メッセージが動画を含むか")] = None,
+        has_audio: Annotated[Optional[StrictBool], Field(description="メッセージが音声ファイルを含むか")] = None,
+        limit: Annotated[Optional[Annotated[int, Field(le=100, strict=True, ge=1)]], Field(description="検索結果から取得するメッセージの最大件数")] = None,
+        offset: Annotated[Optional[Annotated[int, Field(le=9900, strict=True, ge=0)]], Field(description="検索結果から取得するメッセージのオフセット")] = None,
+        sort: Annotated[Optional[StrictStr], Field(description="ソート順 (作成日時が新しい `createdAt`, 作成日時が古い `-createdAt`, 更新日時が新しい `updatedAt`, 更新日時が古い `-updatedAt`)")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """メッセージを検索
+
+        メッセージを検索します。
+
+        :param word: 検索ワード Simple-Query-String-Syntaxをパースして検索します 
+        :type word: str
+        :param after: 投稿日時が指定日時より後
+        :type after: datetime
+        :param before: 投稿日時が指定日時より前
+        :type before: datetime
+        :param var_in: メッセージが投稿されたチャンネル
+        :type var_in: str
+        :param to: メンションされたユーザー
+        :type to: str
+        :param var_from: メッセージを投稿したユーザー
+        :type var_from: str
+        :param citation: 引用しているメッセージ
+        :type citation: str
+        :param bot: メッセージを投稿したユーザーがBotかどうか
+        :type bot: bool
+        :param has_url: メッセージがURLを含むか
+        :type has_url: bool
+        :param has_attachments: メッセージが添付ファイルを含むか
+        :type has_attachments: bool
+        :param has_image: メッセージが画像を含むか
+        :type has_image: bool
+        :param has_video: メッセージが動画を含むか
+        :type has_video: bool
+        :param has_audio: メッセージが音声ファイルを含むか
+        :type has_audio: bool
+        :param limit: 検索結果から取得するメッセージの最大件数
+        :type limit: int
+        :param offset: 検索結果から取得するメッセージのオフセット
+        :type offset: int
+        :param sort: ソート順 (作成日時が新しい `createdAt`, 作成日時が古い `-createdAt`, 更新日時が新しい `updatedAt`, 更新日時が古い `-updatedAt`)
+        :type sort: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._search_messages_serialize(
+            word=word,
+            after=after,
+            before=before,
+            var_in=var_in,
+            to=to,
+            var_from=var_from,
+            citation=citation,
+            bot=bot,
+            has_url=has_url,
+            has_attachments=has_attachments,
+            has_image=has_image,
+            has_video=has_video,
+            has_audio=has_audio,
+            limit=limit,
+            offset=offset,
+            sort=sort,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "MessageSearchResult",
+            '400': None,
+            '503': None,
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _search_messages_serialize(
+        self,
+        word,
+        after,
+        before,
+        var_in,
+        to,
+        var_from,
+        citation,
+        bot,
+        has_url,
+        has_attachments,
+        has_image,
+        has_video,
+        has_audio,
+        limit,
+        offset,
+        sort,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[str, Union[str, bytes]] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        # process the query parameters
+        if word is not None:
+            
+            _query_params.append(('word', word))
+            
+        if after is not None:
+            if isinstance(after, datetime):
+                _query_params.append(
+                    (
+                        'after',
+                        after.strftime(
+                            self.api_client.configuration.datetime_format
+                        )
+                    )
+                )
+            else:
+                _query_params.append(('after', after))
+            
+        if before is not None:
+            if isinstance(before, datetime):
+                _query_params.append(
+                    (
+                        'before',
+                        before.strftime(
+                            self.api_client.configuration.datetime_format
+                        )
+                    )
+                )
+            else:
+                _query_params.append(('before', before))
+            
+        if var_in is not None:
+            
+            _query_params.append(('in', var_in))
+            
+        if to is not None:
+            
+            _query_params.append(('to', to))
+            
+        if var_from is not None:
+            
+            _query_params.append(('from', var_from))
+            
+        if citation is not None:
+            
+            _query_params.append(('citation', citation))
+            
+        if bot is not None:
+            
+            _query_params.append(('bot', bot))
+            
+        if has_url is not None:
+            
+            _query_params.append(('hasURL', has_url))
+            
+        if has_attachments is not None:
+            
+            _query_params.append(('hasAttachments', has_attachments))
+            
+        if has_image is not None:
+            
+            _query_params.append(('hasImage', has_image))
+            
+        if has_video is not None:
+            
+            _query_params.append(('hasVideo', has_video))
+            
+        if has_audio is not None:
+            
+            _query_params.append(('hasAudio', has_audio))
+            
+        if limit is not None:
+            
+            _query_params.append(('limit', limit))
+            
+        if offset is not None:
+            
+            _query_params.append(('offset', offset))
+            
+        if sort is not None:
+            
+            _query_params.append(('sort', sort))
+            
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            [
+                'application/json'
+            ]
+        )
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'OAuth2', 
+            'bearerAuth'
+        ]
+
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/messages',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
             body=_body_params,
             post_params=_form_params,
             files=_files,
-            response_types_map=_response_types_map,
             auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
             collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+

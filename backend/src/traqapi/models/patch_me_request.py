@@ -17,21 +17,23 @@ import pprint
 import re  # noqa: F401
 import json
 
-
-from typing import Optional
-from pydantic import BaseModel, Field, StrictStr, constr, validator
+from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
+from typing import Any, ClassVar, Dict, List, Optional
+from typing_extensions import Annotated
+from typing import Optional, Set
+from typing_extensions import Self
 
 class PatchMeRequest(BaseModel):
     """
-    自分のユーザー情報変更リクエスト  # noqa: E501
-    """
-    display_name: Optional[constr(strict=True, max_length=32, min_length=0)] = Field(None, alias="displayName", description="新しい表示名")
-    twitter_id: Optional[constr(strict=True)] = Field(None, alias="twitterId", description="TwitterID")
-    bio: Optional[constr(strict=True, max_length=1000)] = Field(None, description="自己紹介(biography)")
-    home_channel: Optional[StrictStr] = Field(None, alias="homeChannel", description="ホームチャンネルのUUID `00000000-0000-0000-0000-000000000000`を指定すると、ホームチャンネルが`null`に設定されます")
-    __properties = ["displayName", "twitterId", "bio", "homeChannel"]
+    自分のユーザー情報変更リクエスト
+    """ # noqa: E501
+    display_name: Optional[Annotated[str, Field(min_length=0, strict=True, max_length=32)]] = Field(default=None, description="新しい表示名", alias="displayName")
+    twitter_id: Optional[Annotated[str, Field(strict=True)]] = Field(default=None, description="TwitterID", alias="twitterId")
+    bio: Optional[Annotated[str, Field(strict=True, max_length=1000)]] = Field(default=None, description="自己紹介(biography)")
+    home_channel: Optional[StrictStr] = Field(default=None, description="ホームチャンネルのUUID `00000000-0000-0000-0000-000000000000`を指定すると、ホームチャンネルが`null`に設定されます", alias="homeChannel")
+    __properties: ClassVar[List[str]] = ["displayName", "twitterId", "bio", "homeChannel"]
 
-    @validator('twitter_id')
+    @field_validator('twitter_id')
     def twitter_id_validate_regular_expression(cls, value):
         """Validates the regular expression"""
         if value is None:
@@ -41,46 +43,61 @@ class PatchMeRequest(BaseModel):
             raise ValueError(r"must validate the regular expression /^[a-zA-Z0-9_]{1,15}$/")
         return value
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> PatchMeRequest:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of PatchMeRequest from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> PatchMeRequest:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of PatchMeRequest from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return PatchMeRequest.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = PatchMeRequest.parse_obj({
-            "display_name": obj.get("displayName"),
-            "twitter_id": obj.get("twitterId"),
+        _obj = cls.model_validate({
+            "displayName": obj.get("displayName"),
+            "twitterId": obj.get("twitterId"),
             "bio": obj.get("bio"),
-            "home_channel": obj.get("homeChannel")
+            "homeChannel": obj.get("homeChannel")
         })
         return _obj
 

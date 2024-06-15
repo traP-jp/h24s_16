@@ -17,81 +17,99 @@ import pprint
 import re  # noqa: F401
 import json
 
-from datetime import datetime
-from typing import List
-from pydantic import BaseModel, Field, StrictBool, StrictStr, conlist, constr
+from datetime import datetime as _datetime
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
+from typing import Any, ClassVar, Dict, List
+from typing_extensions import Annotated
 from traqapi.models.bot_mode import BotMode
 from traqapi.models.bot_state import BotState
 from traqapi.models.bot_tokens import BotTokens
+from typing import Optional, Set
+from typing_extensions import Self
 
 class BotDetail(BaseModel):
     """
-    BOT詳細情報  # noqa: E501
-    """
-    id: StrictStr = Field(..., description="BOT UUID")
-    updated_at: datetime = Field(..., alias="updatedAt", description="更新日時")
-    created_at: datetime = Field(..., alias="createdAt", description="作成日時")
-    mode: BotMode = Field(...)
-    state: BotState = Field(...)
-    subscribe_events: conlist(StrictStr) = Field(..., alias="subscribeEvents", description="BOTが購読しているイベントの配列")
-    developer_id: StrictStr = Field(..., alias="developerId", description="BOT開発者UUID")
-    description: constr(strict=True, max_length=1000) = Field(..., description="説明")
-    bot_user_id: StrictStr = Field(..., alias="botUserId", description="BOTユーザーUUID")
-    tokens: BotTokens = Field(...)
-    endpoint: StrictStr = Field(..., description="BOTサーバーエンドポイント")
-    privileged: StrictBool = Field(..., description="特権BOTかどうか")
-    channels: conlist(StrictStr) = Field(..., description="BOTが参加しているチャンネルのUUID配列")
-    __properties = ["id", "updatedAt", "createdAt", "mode", "state", "subscribeEvents", "developerId", "description", "botUserId", "tokens", "endpoint", "privileged", "channels"]
+    BOT詳細情報
+    """ # noqa: E501
+    id: StrictStr = Field(description="BOT UUID")
+    updated_at: _datetime = Field(description="更新日時", alias="updatedAt")
+    created_at: _datetime = Field(description="作成日時", alias="createdAt")
+    mode: BotMode
+    state: BotState
+    subscribe_events: List[StrictStr] = Field(description="BOTが購読しているイベントの配列", alias="subscribeEvents")
+    developer_id: StrictStr = Field(description="BOT開発者UUID", alias="developerId")
+    description: Annotated[str, Field(strict=True, max_length=1000)] = Field(description="説明")
+    bot_user_id: StrictStr = Field(description="BOTユーザーUUID", alias="botUserId")
+    tokens: BotTokens
+    endpoint: StrictStr = Field(description="BOTサーバーエンドポイント")
+    privileged: StrictBool = Field(description="特権BOTかどうか")
+    channels: List[StrictStr] = Field(description="BOTが参加しているチャンネルのUUID配列")
+    __properties: ClassVar[List[str]] = ["id", "updatedAt", "createdAt", "mode", "state", "subscribeEvents", "developerId", "description", "botUserId", "tokens", "endpoint", "privileged", "channels"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> BotDetail:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of BotDetail from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
         # override the default output from pydantic by calling `to_dict()` of tokens
         if self.tokens:
             _dict['tokens'] = self.tokens.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> BotDetail:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of BotDetail from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return BotDetail.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = BotDetail.parse_obj({
+        _obj = cls.model_validate({
             "id": obj.get("id"),
-            "updated_at": obj.get("updatedAt"),
-            "created_at": obj.get("createdAt"),
+            "updatedAt": obj.get("updatedAt"),
+            "createdAt": obj.get("createdAt"),
             "mode": obj.get("mode"),
             "state": obj.get("state"),
-            "subscribe_events": obj.get("subscribeEvents"),
-            "developer_id": obj.get("developerId"),
+            "subscribeEvents": obj.get("subscribeEvents"),
+            "developerId": obj.get("developerId"),
             "description": obj.get("description"),
-            "bot_user_id": obj.get("botUserId"),
-            "tokens": BotTokens.from_dict(obj.get("tokens")) if obj.get("tokens") is not None else None,
+            "botUserId": obj.get("botUserId"),
+            "tokens": BotTokens.from_dict(obj["tokens"]) if obj.get("tokens") is not None else None,
             "endpoint": obj.get("endpoint"),
             "privileged": obj.get("privileged"),
             "channels": obj.get("channels")
