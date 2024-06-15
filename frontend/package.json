@@ -10,7 +10,8 @@
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
-    "format": "prettier --write src/"
+    "format": "prettier --write src/",
+    "api": "openapi --input ../docs/openapi.yaml --output src/apis/generated --client fetch --name AppClient"
   },
   "dependencies": {
     "@date-io/dayjs": "^3.0.0",
@@ -20,6 +21,7 @@
     "vuetify": "^3.6.9"
   },
   "devDependencies": {
+    "@iconify/vue": "^4.1.2",
     "@rushstack/eslint-patch": "^1.8.0",
     "@tsconfig/node20": "^20.1.4",
     "@types/node": "^20.12.5",
