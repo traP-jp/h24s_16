@@ -12,8 +12,8 @@ from aiotraq_bot.models.event import (
 )
 from aiotraq_message import TraqMessage, TraqMessageManager
 
-from .stamps import ampmstamps, clockstamps, daystamps, stamp_ids_rev
-from .util import remove_bot_stamps
+from src.bot.stamps import ampmstamps, clockstamps, daystamps, stamp_ids_rev
+from src.bot.util import remove_bot_stamps
 
 base_url = "https://q.trap.jp/api/v3"
 bot_verification_token = os.getenv("BOT_VERIFICATION_TOKEN", "")
