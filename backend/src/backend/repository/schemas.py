@@ -12,8 +12,10 @@ class TaskBase(BaseModel):
 class TaskCreate(TaskBase):
     pass
 
+class TaskUpdate(TaskBase):
+    pass
 
-class TaskResponse(TaskBase):
+class Task(TaskBase):
     id: str
     created_at: str
     updated_at: str
@@ -21,4 +23,77 @@ class TaskResponse(TaskBase):
     class Config:
         orm_mode = True
 
-# Define other schemas similarly if needed
+class LabelBase(BaseModel):
+    name: str
+    group_id: str
+
+class LabelCreate(LabelBase):
+    pass
+
+class LabelUpdate(LabelBase):
+    pass
+
+class Label(LabelBase):
+    id: str
+    created_at: str
+    updated_at: str
+
+class UserBase(BaseModel):
+    id: str
+    remind_channel_id: str
+    periodic_remind_at: str
+
+class UserCreate(UserBase):
+    pass
+
+class UserUpdate(UserBase):
+    pass
+
+class User(UserBase):
+    created_at: str
+    updated_at: str
+
+class GroupBase(BaseModel):
+    id: str
+    remind_channel_id: str
+    periodic_remind_at: str
+
+class GroupCreate(GroupBase):
+    pass
+
+class GroupUpdate(GroupBase):
+    pass
+
+class Group(GroupBase):
+    created_at: str
+    updated_at: str
+
+class TaskAssigneeBase(BaseModel):
+    task_id: str
+    user_id: str
+
+class TaskAssigneeCreate(TaskAssigneeBase):
+    pass
+
+class TaskAssigneeUpdate(TaskAssigneeBase):
+    pass
+
+class TaskAssignee(TaskAssigneeBase):
+    created_at: str
+    updated_at: str
+
+# user+group: c+r+u
+
+class TaskLabelBase(BaseModel):
+    task_id: str
+    label_id: list[str]
+
+class TaskLabelCreate(TaskLabelBase):
+    pass
+
+class TaskLabelUpdate(TaskLabelBase):
+    pass
+
+class TaskLabel(TaskLabelBase):
+    created_at: str
+    updated_at: str
