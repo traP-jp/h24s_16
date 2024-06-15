@@ -1,0 +1,31 @@
+[project]
+name = "tasq-backend"
+version = "0.1.0"
+description = "Add your description here"
+authors = [
+    { name = "trasta", email = "trasta298@gmail.com" }
+]
+dependencies = [
+    "fastapi>=0.111.0",
+    "aiotraq>=0.1.2",
+    "aiotraq-bot>=0.1.2",
+    "aiotraq-message>=0.2.0",
+]
+readme = "README.md"
+requires-python = ">= 3.8"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.rye]
+managed = true
+dev-dependencies = [
+    "ruff>=0.4.9",
+]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/backend"]

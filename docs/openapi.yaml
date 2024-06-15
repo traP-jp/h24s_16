@@ -1,0 +1,399 @@
+---
+openapi: 3.1.0
+info:
+  title: FastAPI
+  version: 0.1.0
+paths:
+  "/users/me":
+    get:
+      summary: Get User
+      operationId: get_user_users_me_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/User"
+  "/users/groups":
+    get:
+      summary: Get User Groups
+      operationId: get_user_groups_users_groups_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  "$ref": "#/components/schemas/Group"
+                type: array
+                title: Response Get User Groups Users Groups Get
+  "/groups/{group_id}":
+    get:
+      summary: Get Group
+      operationId: get_group_groups__group_id__get
+      parameters:
+      - name: group_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Group Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Group"
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/HTTPValidationError"
+  "/groups/{group_id}/tasks":
+    get:
+      summary: Get Group Tasks
+      operationId: get_group_tasks_groups__group_id__tasks_get
+      parameters:
+      - name: group_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Group Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/Task"
+                title: Response Get Group Tasks Groups  Group Id  Tasks Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/HTTPValidationError"
+  "/tasks":
+    post:
+      summary: Create Task
+      operationId: create_task_tasks_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CreateTaskRequest"
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Task"
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/HTTPValidationError"
+  "/tasks/{task_id}":
+    patch:
+      summary: Edit Task
+      operationId: edit_task_tasks__task_id__patch
+      parameters:
+      - name: task_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Task Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/HTTPValidationError"
+    delete:
+      summary: Delete Task
+      operationId: delete_task_tasks__task_id__delete
+      parameters:
+      - name: task_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Task Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/HTTPValidationError"
+  "/labels":
+    post:
+      summary: Create Label
+      operationId: create_label_labels_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CreateLabelRequest"
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Label"
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/HTTPValidationError"
+  "/labels/{label_id}":
+    patch:
+      summary: Edit Label
+      operationId: edit_label_labels__label_id__patch
+      parameters:
+      - name: label_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Label Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/HTTPValidationError"
+    delete:
+      summary: Delete Label
+      operationId: delete_label_labels__label_id__delete
+      parameters:
+      - name: label_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Label Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/HTTPValidationError"
+components:
+  schemas:
+    CreateLabelRequest:
+      properties:
+        name:
+          type: string
+          title: Name
+        group_id:
+          type: string
+          title: Group Id
+      type: object
+      required:
+      - name
+      - group_id
+      title: CreateLabelRequest
+    CreateTaskRequest:
+      properties:
+        title:
+          type: string
+          title: Title
+        content:
+          type: string
+          title: Content
+        group_id:
+          type: string
+          title: Group Id
+        due_date:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Due Date
+        assigned_user_ids:
+          items:
+            type: string
+          type: array
+          title: Assigned User Ids
+      type: object
+      required:
+      - title
+      - content
+      - group_id
+      - due_date
+      - assigned_user_ids
+      title: CreateTaskRequest
+    Group:
+      properties:
+        id:
+          type: string
+          title: Id
+        remind_channel_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Remind Channel Id
+        periodic_remind_at:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Periodic Remind At
+        user_ids:
+          items:
+            type: string
+          type: array
+          title: User Ids
+      type: object
+      required:
+      - id
+      - remind_channel_id
+      - periodic_remind_at
+      - user_ids
+      title: Group
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            "$ref": "#/components/schemas/ValidationError"
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    Label:
+      properties:
+        id:
+          type: string
+          title: Id
+        name:
+          type: string
+          title: Name
+        group_id:
+          type: string
+          title: Group Id
+      type: object
+      required:
+      - id
+      - name
+      - group_id
+      title: Label
+    Task:
+      properties:
+        id:
+          type: string
+          title: Id
+        title:
+          type: string
+          title: Title
+        content:
+          type: string
+          title: Content
+        message_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Message Id
+        group_id:
+          type: string
+          title: Group Id
+        due_date:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Due Date
+        assigned_user_ids:
+          items:
+            type: string
+          type: array
+          title: Assigned User Ids
+      type: object
+      required:
+      - id
+      - title
+      - content
+      - message_id
+      - group_id
+      - due_date
+      - assigned_user_ids
+      title: Task
+    User:
+      properties:
+        id:
+          type: string
+          title: Id
+        remind_channel_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Remind Channel Id
+        periodic_remind_at:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Periodic Remind At
+      type: object
+      required:
+      - id
+      - remind_channel_id
+      - periodic_remind_at
+      title: User
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+
