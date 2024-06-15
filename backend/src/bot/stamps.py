@@ -1,12 +1,14 @@
+from typing import Final
 
-stamps = {
-    "day0": "df26388c-30db-4f3c-a0e6-2593e051ccc2",
-    "day1": "3b14cee8-35b4-4612-a769-c812db0cbbf1",
-    "day2": "212c707c-e281-416a-a1ae-b39dbd1061fc",
-    "day3": "17f9361c-78d4-4b3a-ae53-f402fbaefd06",
-    "day4": "1aad06ea-b556-4dce-97a4-3e4bc8ccb150",
-    "day5": "84d09a53-2dec-4615-920c-7bad823fb1e1",
-    "day6": "cb238f8f-d5e3-4672-854b-473bbfef3c19",
+stamp_ids: Final[dict] = {
+    "day0_sunday": "df26388c-30db-4f3c-a0e6-2593e051ccc2",
+    "day1_monday": "3b14cee8-35b4-4612-a769-c812db0cbbf1",
+    "day2_tuesday": "212c707c-e281-416a-a1ae-b39dbd1061fc",
+    "day3_wednesday": "17f9361c-78d4-4b3a-ae53-f402fbaefd06",
+    "day4_thursday": "1aad06ea-b556-4dce-97a4-3e4bc8ccb150",
+    "day5_friday": "84d09a53-2dec-4615-920c-7bad823fb1e1",
+    "day6_saturday": "cb238f8f-d5e3-4672-854b-473bbfef3c19",
+    "day7_darkday": "f801baa9-6d39-4715-bd91-bbe76a3108e0",
     "AM": "3ef8f67d-65da-41bd-a269-863a94e7c3f3",
     "PM": "2d790eeb-496a-41a5-af8f-19dfb4f4c328",
     "clock06": "0907e724-4d67-4dcb-b772-281ee89315f9",
@@ -34,3 +36,48 @@ stamps = {
     "clock07": "eae07ca9-437d-4b2e-abd9-7ab7a1ae8ddd",
     "clock05": "eb42b842-59e8-4a5a-ae1b-898755447d1c",
 }
+
+stamp_ids_rev: Final[dict] = {v: k for k, v in stamp_ids.items()}
+
+daystamps: Final[list] = [
+    stamp_ids["day0_sunday"],
+    stamp_ids["day1_monday"],
+    stamp_ids["day2_tuesday"],
+    stamp_ids["day3_wednesday"],
+    stamp_ids["day4_thursday"],
+    stamp_ids["day5_friday"],
+    stamp_ids["day6_saturday"],
+    stamp_ids["day7_darkday"],
+]
+
+ampmstamps: Final[list] = [
+    stamp_ids["AM"],
+    stamp_ids["PM"],
+]
+
+clockstamps: Final[list] = [
+    stamp_ids["clock12"],
+    stamp_ids["clock1230"],
+    stamp_ids["clock01"],
+    stamp_ids["clock0130"],
+    stamp_ids["clock02"],
+    stamp_ids["clock0230"],
+    stamp_ids["clock03"],
+    stamp_ids["clock0330"],
+    stamp_ids["clock04"],
+    stamp_ids["clock0430"],
+    stamp_ids["clock05"],
+    stamp_ids["clock0530"],
+    stamp_ids["clock06"],
+    stamp_ids["clock0630"],
+    stamp_ids["clock07"],
+    stamp_ids["clock0730"],
+    stamp_ids["clock08"],
+    stamp_ids["clock0830"],
+    stamp_ids["clock09"],
+    stamp_ids["clock0930"],
+    stamp_ids["clock10"],
+    stamp_ids["clock1030"],
+    stamp_ids["clock11"],
+    stamp_ids["clock1130"],
+]
