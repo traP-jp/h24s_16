@@ -62,30 +62,27 @@ const toggleDetails = (task: Task) => {
             <div class="task-container">
               <div class="task-title">{{ task.title }}</div>
 
-          <div class="task-details">
-            <p>期日：2024年6月15日</p>
-            <!-- 詳細を表示ボタン -->
-            <div v-if="task.showDetails == false" class="additional-details">
-            <button class="detail-button" @click="toggleDetails(task)">詳細を表示</button>
-          </div>
-          </div>
+              <div class="task-details">
+                <p>期日：2024年6月15日</p>
+                <!-- 詳細を表示ボタン -->
+                <div v-if="task.showDetails == false" class="additional-details">
+                  <button class="detail-button" @click="toggleDetails(task)">詳細を表示</button>
+                </div>
+              </div>
 
-          <!-- 詳細情報を表示 -->
-          <div v-if="task.showDetails" class="additional-details">
-            {{task.content}}
-          <div>
-            <button class="close-button" @click="toggleDetails(task)">閉じる</button>
-          </div>
-          </div>
-
-        </div>
-      </li>
-    </ul>
+              <!-- 詳細情報を表示 -->
+              <div v-if="task.showDetails" class="additional-details">
+                {{ task.content }}
+                <div>
+                  <button class="close-button" @click="toggleDetails(task)">閉じる</button>
+                </div>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </PageContainer>
   </div>
-</PageContainer>
-  </div>
-
-
 
   <div class="about">
     <h1>This is an about page</h1>
@@ -149,7 +146,7 @@ ul {
 
 .close-button {
   padding: 8px 16px; /* ボタンの内側の余白 */
-  color: #6AA2B4; /* ボタンのテキスト色 */
+  color: #6aa2b4; /* ボタンのテキスト色 */
   cursor: pointer; /* ホバー時にカーソルをポインターにする */
 }
 
