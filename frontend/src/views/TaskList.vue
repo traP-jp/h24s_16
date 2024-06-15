@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import PrimaryButton from '@/components/PrimaryButton.vue'
 import PageContainer from '@/components/PageContainer.vue'
 import PageHeader from '@/components/PageHeader.vue'
+import TaskItem from '@/components/TaskItem.vue'
 
 interface Task {
   id: string
@@ -75,6 +76,9 @@ const toggleDetails = (task: Task) => {
           </li>
         </ul>
       </div>
+      <ul>
+        <TaskItem :tasks="tasks" />
+      </ul>
     </PageContainer>
   </div>
 </template>
@@ -82,13 +86,10 @@ const toggleDetails = (task: Task) => {
 <style lang="scss" scoped>
 .sidebar {
   background-color: #ffffff;
-  // position: fixed;
-  width: 200px;
+  min-width: 200px;
+  max-width: 500px;
   height: 100%;
-  // left: 0;
-  // top: 0;
-  padding-top: 60px; /* Adjust this value to match the height of your header */
-  padding-left: 30px;
+  padding: 60px 30px; /* Adjust this value to match the height of your header */
   overflow: auto;
 }
 
@@ -137,7 +138,10 @@ ul {
   text-decoration: underline;
 }
 .pageContents {
-  display: flex;
+  height: calc(100% - 5rem);
+  display: grid;
+  grid-template-columns: 1fr 5fr;
+  align-content: center;
 }
 
 @media (min-width: 1024px) {
