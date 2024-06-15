@@ -42,9 +42,9 @@ const toggleDetails = (task: Task) => {
   <!-- サイドバー -->
   <div class="sidebar">
     <ul>
-      <p v-for="group in groups" :key="group.name" >
+      <span v-for="group in groups" :key="group.name" >
         <div>{{ group.name }}</div>
-      </p>
+      </span>
     </ul>
     <div>
     <button class="addTask-button">新規タスクを追加</button>
