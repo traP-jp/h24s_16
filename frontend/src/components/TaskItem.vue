@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+
+const openDetail = ref<boolean>(false)
+
 interface Task {
   id: string
   title: string
@@ -6,34 +10,32 @@ interface Task {
   showDetails: boolean // 詳細表示の状態を追加
 }
 interface Props {
-  tasks: Task[]
+  task: Task
 }
 
 defineProps<Props>()
 
 // 詳細表示の切り替え関数
-const toggleDetails = (task: Task) => {
-  task.showDetails = !task.showDetails
+const toggleDetails = () => {
+  openDetail.value = !openDetail.value
 }
 </script>
 
 <template>
-  <li v-for="task in tasks" :key="task.id">
-    <div class="task-container">
-      <div class="task-title">{{ task.title }}</div>
+  <div class="task-container">
+    <div class="task-title">{{ task.title }}</div>
 
-      <!-- 詳細情報を条件付きで表示 -->
-      <div v-if="task.showDetails" class="additional-details">
-        <!-- 隠されていた詳細情報 -->
-        {{ task.content }}
-      </div>
-      <div class="task-details">
-        <p>期日：2024年6月15日</p>
-        <!-- 詳細を表示のテキストを追加 -->
-        <button class="detail-button" @click="toggleDetails(task)">詳細を表示</button>
-      </div>
+    <!-- 詳細情報を条件付きで表示 -->
+    <div v-if="openDetail" class="additional-details">
+      <!-- 隠されていた詳細情報 -->
+      {{ task.content }}
     </div>
-  </li>
+    <div class="task-details">
+      <p>期日：2024年6月15日</p>
+      <!-- 詳細を表示のテキストを追加 -->
+      <button class="detail-button" @click="toggleDetails()">詳細を表示</button>
+    </div>
+  </div>
 </template>
 
 <style lang="scss" scoped>

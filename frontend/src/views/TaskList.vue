@@ -56,36 +56,35 @@ const toggleDetails = (task: Task) => {
     </div>
     <PageContainer>
       <!-- タスク一覧表示 -->
-      <div>
-        <ul>
-          <li v-for="task in tasks" :key="task.id">
-            <div class="task-container">
-              <div class="task-title">{{ task.title }}</div>
+      <ul>
+        <li v-for="task in tasks" :key="task.id">
+          <div class="task-container">
+            <div class="task-title">{{ task.title }}</div>
 
-              <div class="task-details">
-                <p>期日：2024年6月15日</p>
-                <!-- 詳細を表示ボタン -->
-                <div v-if="task.showDetails == false" class="additional-details">
-                  <button class="detail-button" @click="toggleDetails(task)">詳細を表示</button>
-                </div>
-              </div>
-
-              <!-- 詳細情報を表示 -->
-              <div v-if="task.showDetails" class="additional-details">
-                {{ task.content }}
-                <div>
-                  <button class="close-button" @click="toggleDetails(task)">閉じる</button>
-                </div>
+            <div class="task-details">
+              <p>期日：2024年6月15日</p>
+              <!-- 詳細を表示ボタン -->
+              <div v-if="task.showDetails == false" class="additional-details">
+                <button class="detail-button" @click="toggleDetails(task)">詳細を表示</button>
               </div>
             </div>
-          </li>
-        </ul>
-      </div>
-    </PageContainer>
-  </div>
 
-  <div class="about">
-    <h1>This is an about page</h1>
+            <!-- 詳細情報を表示 -->
+            <div v-if="task.showDetails" class="additional-details">
+              {{ task.content }}
+              <div>
+                <button class="close-button" @click="toggleDetails(task)">閉じる</button>
+              </div>
+            </div>
+          </div>
+        </li>
+      </ul>
+      <ul>
+        <li v-for="task in tasks" :key="task.id">
+          <TaskItem :task="task" />
+        </li>
+      </ul>
+    </PageContainer>
   </div>
 </template>
 
@@ -109,8 +108,8 @@ const toggleDetails = (task: Task) => {
   border-radius: 10px; /* 枠を丸くする */
   padding: 10px;
   margin: 15px;
-  margin-left: 230px;
-  margin-right: 30px;
+  // margin-left: 230px;
+  // margin-right: 30px;
   /* margin-right: 30px; */
   background-color: white; /* 背景色を変更する */
   /* width: calc(100% - 230px);  */
