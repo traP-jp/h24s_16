@@ -17,71 +17,89 @@ import pprint
 import re  # noqa: F401
 import json
 
-from datetime import datetime
-from typing import List, Optional
-from pydantic import BaseModel, Field, StrictBool, StrictStr, conlist, constr, validator
+from datetime import datetime as _datetime
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr, field_validator
+from typing import Any, ClassVar, Dict, List, Optional
+from typing_extensions import Annotated
 from traqapi.models.user_account_state import UserAccountState
 from traqapi.models.user_permission import UserPermission
 from traqapi.models.user_tag import UserTag
+from typing import Optional, Set
+from typing_extensions import Self
 
 class MyUserDetail(BaseModel):
     """
-    自分のユーザー詳細情報  # noqa: E501
-    """
-    id: StrictStr = Field(..., description="ユーザーUUID")
-    bio: constr(strict=True, max_length=1000) = Field(..., description="自己紹介(biography)")
-    groups: conlist(StrictStr) = Field(..., description="所属グループのUUIDの配列")
-    tags: conlist(UserTag) = Field(..., description="タグリスト")
-    updated_at: datetime = Field(..., alias="updatedAt", description="更新日時")
-    last_online: Optional[datetime] = Field(..., alias="lastOnline", description="最終オンライン日時")
-    twitter_id: constr(strict=True) = Field(..., alias="twitterId", description="Twitter ID")
-    name: constr(strict=True) = Field(..., description="ユーザー名")
-    display_name: constr(strict=True, max_length=32, min_length=0) = Field(..., alias="displayName", description="ユーザー表示名")
-    icon_file_id: StrictStr = Field(..., alias="iconFileId", description="アイコンファイルUUID")
-    bot: StrictBool = Field(..., description="BOTかどうか")
-    state: UserAccountState = Field(...)
-    permissions: conlist(UserPermission) = Field(..., description="所有している権限の配列")
-    home_channel: Optional[StrictStr] = Field(..., alias="homeChannel", description="ホームチャンネル")
-    __properties = ["id", "bio", "groups", "tags", "updatedAt", "lastOnline", "twitterId", "name", "displayName", "iconFileId", "bot", "state", "permissions", "homeChannel"]
+    自分のユーザー詳細情報
+    """ # noqa: E501
+    id: StrictStr = Field(description="ユーザーUUID")
+    bio: Annotated[str, Field(strict=True, max_length=1000)] = Field(description="自己紹介(biography)")
+    groups: List[StrictStr] = Field(description="所属グループのUUIDの配列")
+    tags: List[UserTag] = Field(description="タグリスト")
+    updated_at: _datetime = Field(description="更新日時", alias="updatedAt")
+    last_online: Optional[_datetime] = Field(description="最終オンライン日時", alias="lastOnline")
+    twitter_id: Annotated[str, Field(strict=True)] = Field(description="Twitter ID", alias="twitterId")
+    name: Annotated[str, Field(strict=True)] = Field(description="ユーザー名")
+    display_name: Annotated[str, Field(min_length=0, strict=True, max_length=32)] = Field(description="ユーザー表示名", alias="displayName")
+    icon_file_id: StrictStr = Field(description="アイコンファイルUUID", alias="iconFileId")
+    bot: StrictBool = Field(description="BOTかどうか")
+    state: UserAccountState
+    permissions: List[UserPermission] = Field(description="所有している権限の配列")
+    home_channel: Optional[StrictStr] = Field(description="ホームチャンネル", alias="homeChannel")
+    __properties: ClassVar[List[str]] = ["id", "bio", "groups", "tags", "updatedAt", "lastOnline", "twitterId", "name", "displayName", "iconFileId", "bot", "state", "permissions", "homeChannel"]
 
-    @validator('twitter_id')
+    @field_validator('twitter_id')
     def twitter_id_validate_regular_expression(cls, value):
         """Validates the regular expression"""
         if not re.match(r"^[a-zA-Z0-9_]{1,15}$", value):
             raise ValueError(r"must validate the regular expression /^[a-zA-Z0-9_]{1,15}$/")
         return value
 
-    @validator('name')
+    @field_validator('name')
     def name_validate_regular_expression(cls, value):
         """Validates the regular expression"""
         if not re.match(r"^[a-zA-Z0-9_-]{1,32}$", value):
             raise ValueError(r"must validate the regular expression /^[a-zA-Z0-9_-]{1,32}$/")
         return value
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> MyUserDetail:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of MyUserDetail from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
         # override the default output from pydantic by calling `to_dict()` of each item in tags (list)
         _items = []
         if self.tags:
@@ -90,41 +108,41 @@ class MyUserDetail(BaseModel):
                     _items.append(_item.to_dict())
             _dict['tags'] = _items
         # set to None if last_online (nullable) is None
-        # and __fields_set__ contains the field
-        if self.last_online is None and "last_online" in self.__fields_set__:
+        # and model_fields_set contains the field
+        if self.last_online is None and "last_online" in self.model_fields_set:
             _dict['lastOnline'] = None
 
         # set to None if home_channel (nullable) is None
-        # and __fields_set__ contains the field
-        if self.home_channel is None and "home_channel" in self.__fields_set__:
+        # and model_fields_set contains the field
+        if self.home_channel is None and "home_channel" in self.model_fields_set:
             _dict['homeChannel'] = None
 
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> MyUserDetail:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of MyUserDetail from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return MyUserDetail.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = MyUserDetail.parse_obj({
+        _obj = cls.model_validate({
             "id": obj.get("id"),
             "bio": obj.get("bio"),
             "groups": obj.get("groups"),
-            "tags": [UserTag.from_dict(_item) for _item in obj.get("tags")] if obj.get("tags") is not None else None,
-            "updated_at": obj.get("updatedAt"),
-            "last_online": obj.get("lastOnline"),
-            "twitter_id": obj.get("twitterId"),
+            "tags": [UserTag.from_dict(_item) for _item in obj["tags"]] if obj.get("tags") is not None else None,
+            "updatedAt": obj.get("updatedAt"),
+            "lastOnline": obj.get("lastOnline"),
+            "twitterId": obj.get("twitterId"),
             "name": obj.get("name"),
-            "display_name": obj.get("displayName"),
-            "icon_file_id": obj.get("iconFileId"),
+            "displayName": obj.get("displayName"),
+            "iconFileId": obj.get("iconFileId"),
             "bot": obj.get("bot"),
             "state": obj.get("state"),
             "permissions": obj.get("permissions"),
-            "home_channel": obj.get("homeChannel")
+            "homeChannel": obj.get("homeChannel")
         })
         return _obj
 
