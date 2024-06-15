@@ -1,24 +1,14 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import type { TaskDetails } from '@/apis/generated'
 
 const openDetail = ref<boolean>(false)
 
-interface Task {
-  id: string
-  title: string
-  content: string
-  showDetails: boolean // 詳細表示の状態を追加
-}
 interface Props {
-  task: Task
+  task: TaskDetails
 }
 
 defineProps<Props>()
-
-// 詳細表示の切り替え関数
-const toggleDetails = () => {
-  openDetail.value = !openDetail.value
-}
 </script>
 
 <template>
@@ -33,7 +23,7 @@ const toggleDetails = () => {
     <div class="task-details">
       <p>期日：2024年6月15日</p>
       <!-- 詳細を表示のテキストを追加 -->
-      <button class="detail-button" @click="toggleDetails()">詳細を表示</button>
+      <button class="detail-button" @click="openDetail = !openDetail">詳細を表示</button>
     </div>
   </div>
 </template>
