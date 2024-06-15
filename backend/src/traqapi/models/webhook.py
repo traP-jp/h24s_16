@@ -17,70 +17,87 @@ import pprint
 import re  # noqa: F401
 import json
 
-from datetime import datetime
-
-from pydantic import BaseModel, Field, StrictBool, StrictStr
+from datetime import datetime as _datetime
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
+from typing import Any, ClassVar, Dict, List
+from typing import Optional, Set
+from typing_extensions import Self
 
 class Webhook(BaseModel):
     """
-    Webhook情報  # noqa: E501
-    """
-    id: StrictStr = Field(..., description="WebhookUUID")
-    bot_user_id: StrictStr = Field(..., alias="botUserId", description="WebhookユーザーUUID")
-    display_name: StrictStr = Field(..., alias="displayName", description="Webhookユーザー表示名")
-    description: StrictStr = Field(..., description="説明")
-    secure: StrictBool = Field(..., description="セキュアWebhookかどうか")
-    channel_id: StrictStr = Field(..., alias="channelId", description="デフォルトの投稿先チャンネルUUID")
-    owner_id: StrictStr = Field(..., alias="ownerId", description="オーナーUUID")
-    created_at: datetime = Field(..., alias="createdAt", description="作成日時")
-    updated_at: datetime = Field(..., alias="updatedAt", description="更新日時")
-    __properties = ["id", "botUserId", "displayName", "description", "secure", "channelId", "ownerId", "createdAt", "updatedAt"]
+    Webhook情報
+    """ # noqa: E501
+    id: StrictStr = Field(description="WebhookUUID")
+    bot_user_id: StrictStr = Field(description="WebhookユーザーUUID", alias="botUserId")
+    display_name: StrictStr = Field(description="Webhookユーザー表示名", alias="displayName")
+    description: StrictStr = Field(description="説明")
+    secure: StrictBool = Field(description="セキュアWebhookかどうか")
+    channel_id: StrictStr = Field(description="デフォルトの投稿先チャンネルUUID", alias="channelId")
+    owner_id: StrictStr = Field(description="オーナーUUID", alias="ownerId")
+    created_at: _datetime = Field(description="作成日時", alias="createdAt")
+    updated_at: _datetime = Field(description="更新日時", alias="updatedAt")
+    __properties: ClassVar[List[str]] = ["id", "botUserId", "displayName", "description", "secure", "channelId", "ownerId", "createdAt", "updatedAt"]
 
-    class Config:
-        """Pydantic configuration"""
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
-        return pprint.pformat(self.dict(by_alias=True))
+        return pprint.pformat(self.model_dump(by_alias=True))
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> Webhook:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of Webhook from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.dict(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        excluded_fields: Set[str] = set([
+        ])
+
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude=excluded_fields,
+            exclude_none=True,
+        )
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> Webhook:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of Webhook from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return Webhook.parse_obj(obj)
+            return cls.model_validate(obj)
 
-        _obj = Webhook.parse_obj({
+        _obj = cls.model_validate({
             "id": obj.get("id"),
-            "bot_user_id": obj.get("botUserId"),
-            "display_name": obj.get("displayName"),
+            "botUserId": obj.get("botUserId"),
+            "displayName": obj.get("displayName"),
             "description": obj.get("description"),
             "secure": obj.get("secure"),
-            "channel_id": obj.get("channelId"),
-            "owner_id": obj.get("ownerId"),
-            "created_at": obj.get("createdAt"),
-            "updated_at": obj.get("updatedAt")
+            "channelId": obj.get("channelId"),
+            "ownerId": obj.get("ownerId"),
+            "createdAt": obj.get("createdAt"),
+            "updatedAt": obj.get("updatedAt")
         })
         return _obj
 
