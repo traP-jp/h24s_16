@@ -46,9 +46,9 @@ const toggleDetails = (task: Task) => {
     <!-- サイドバー -->
     <div class="sidebar">
       <ul>
-        <span v-for="group in groups" :key="group.name">
+        <li v-for="group in groups" :key="group.name">
           <div>{{ group.name }}</div>
-        </span>
+        </li>
       </ul>
       <router-link :to="{ name: 'TaskAdd' }">
         <PrimaryButton text="新規タスクを追加" />
@@ -62,24 +62,33 @@ const toggleDetails = (task: Task) => {
             <div class="task-container">
               <div class="task-title">{{ task.title }}</div>
 
-              <!-- 詳細情報を条件付きで表示 -->
-              <div v-if="task.showDetails" class="additional-details">
-                <!-- 隠されていた詳細情報 -->
-                {{ task.content }}
-              </div>
-              <div class="task-details">
-                <p>期日：2024年6月15日</p>
-                <!-- 詳細を表示のテキストを追加 -->
-                <button class="detail-button" @click="toggleDetails(task)">詳細を表示</button>
-              </div>
-            </div>
-          </li>
-        </ul>
-      </div>
-      <ul>
-        <TaskItem :tasks="tasks" />
-      </ul>
-    </PageContainer>
+          <div class="task-details">
+            <p>期日：2024年6月15日</p>
+            <!-- 詳細を表示ボタン -->
+            <div v-if="task.showDetails == false" class="additional-details">
+            <button class="detail-button" @click="toggleDetails(task)">詳細を表示</button>
+          </div>
+          </div>
+
+          <!-- 詳細情報を表示 -->
+          <div v-if="task.showDetails" class="additional-details">
+            {{task.content}}
+          <div>
+            <button class="close-button" @click="toggleDetails(task)">閉じる</button>
+          </div>
+          </div>
+
+        </div>
+      </li>
+    </ul>
+  </div>
+</PageContainer>
+  </div>
+
+
+
+  <div class="about">
+    <h1>This is an about page</h1>
   </div>
 </template>
 
@@ -93,7 +102,7 @@ const toggleDetails = (task: Task) => {
   overflow: auto;
 }
 
-.sidebar p {
+.sidebar li {
   margin-bottom: 20px; /* Adjust this value to increase or decrease the space */
 }
 
@@ -135,7 +144,26 @@ ul {
 }
 
 .detail-button:hover {
-  text-decoration: underline;
+  text-decoration: underline; /* 下線を表示 */
+}
+
+.close-button {
+  padding: 8px 16px; /* ボタンの内側の余白 */
+  color: #6AA2B4; /* ボタンのテキスト色 */
+  cursor: pointer; /* ホバー時にカーソルをポインターにする */
+}
+
+.close-button:hover {
+  text-decoration: underline; /* 下線を表示 */
+}
+
+/* グループ選択 */
+.groupSelect-button {
+  font-weight: bold; /* 太文字にする */
+}
+
+.groupSelect-button:hover {
+  text-decoration: underline; /* 下線を表示 */
 }
 .pageContents {
   height: calc(100% - 5rem);
