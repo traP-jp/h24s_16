@@ -13,7 +13,7 @@ from aiotraq_bot import TraqHttpBot
 from aiotraq_bot.models.event import (BotMessageStampsUpdatedPayload,
                                       MessageCreatedPayload)
 from aiotraq_message import TraqMessage, TraqMessageManager
-from src.bot.stamps import ampmstamps, clockstamps, daystamps, stamp_ids_rev
+from src.bot.stamps import ampmstamps, clockstamps, daystamps, stamp_ids, stamp_ids_rev
 from src.bot.util import remove_bot_stamps
 
 base_url = "https://q.trap.jp/api/v3"
@@ -159,13 +159,34 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
         if day_text is None:
             return
         day_stamp = day_text.group(1)
-        # day_index = daystamps.index(stamp_ids[day_stamp])
+
+        day_index = daystamps.index(stamp_ids[day_stamp])
+        now = datetime.datetime.now(tz=tz_jst_name)
+        now_weekday = (now.weekday() + 1) % 7
+        n_day_after = (day_index - now_weekday) % 7
+
+        time_index = clockstamps.index(selected_clock.stamp_id)
+        remind_hour = 0 if selected_ampm.stamp_id == stamp_ids["AM"] else 12
+        remind_hour += time_index // 2
+        remind_minute = 30 if time_index % 2 == 1 else 0
+
+        remind_time = datetime.datetime(
+            year=now.year,
+            month=now.month,
+            day=now.day + n_day_after,
+            hour=remind_hour,
+            minute=remind_minute,
+            second=0,
+            tzinfo=tz_jst_name
+        )
 
         # todo
 
         await asyncio.sleep(1)
 
-        text = f"タスクが設定されたよ！\n{選択した曜日}: :{day_stamp}:\n選択した時間: :{stamp_ids_rev[selected_ampm.stamp_id]}::{stamp_ids_rev[selected_clock.stamp_id]}:\nhttps://q.trap.jp/messages/{task_message_id}"
+        text = f"タスクが設定されたよ！\n{選択した曜日}: :{day_stamp}:\n選択した時間: :{stamp_ids_rev[selected_ampm.stamp_id]}::{stamp_ids_rev[selected_clock.stamp_id]}:\n"\
+            f"リマインドする時間: {remind_time.strftime('%Y-%m-%d %H:%M:%S')}\n"\
+            f"https://q.trap.jp/messages/{task_message_id}"
         await edit_message.asyncio_detailed(
             message_id=message_id,
             client=client,
