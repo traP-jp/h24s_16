@@ -56,10 +56,10 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
 
     print(res.content)
 
-    message_text = re.search(r"https://q.trap.jp/messages/([0-9a-f-]+)", res.content)
-    if message_text is None:
+    task_message_text = re.search(r"https://q.trap.jp/messages/([0-9a-f-]+)", res.content)
+    if task_message_text is None:
         return
-    message_id = message_text.group(1)
+    task_message_id = message_text.group(1)
 
     # 任意のbotのスタンプを削除したいかも
     stamps = remove_bot_stamps(res.stamps)
@@ -67,7 +67,6 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
     print(stamps)
 
     if リマインドしたい曜日を選択してね in res.content:
-        print("リマインドしたい曜日を選択してね")
         # stampsの中で daystamps に含まれていてかつ一番 createdAt が新しいものを取得
         selected_day = None
         for stamp in stamps:
@@ -79,7 +78,7 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
 
         print(selected_day.stamp_id)
 
-        text = f"この投稿をタスクに追加するよ！\n{選択した曜日}: :{stamp_ids_rev[selected_day.stamp_id]}:\n{リマインドしたい時間を選択してね}！\nhttps://q.trap.jp/messages/{message_id}"
+        text = f"この投稿をタスクに追加するよ！\n{選択した曜日}: :{stamp_ids_rev[selected_day.stamp_id]}:\n{リマインドしたい時間を選択してね}！\nhttps://q.trap.jp/messages/{task_message_id}"
         await edit_message.asyncio_detailed(
             message_id=message_id,
             client=client,
@@ -121,7 +120,7 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
                     client=client
                 )
 
-        text = f":loading: リマインドを設定中だよ！\nhttps://q.trap.jp/messages/{message_id}"
+        text = f":loading: リマインドを設定中だよ！\nhttps://q.trap.jp/messages/{task_message_id}"
         await edit_message.asyncio_detailed(
             message_id=message_id,
             client=client,
@@ -136,7 +135,7 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
 
         # todo
 
-        text = f"リマインドが設定されたよ！\n{選択した曜日}: :{day_stamp}:\n選択した時間: :{stamp_ids_rev[selected_ampm.stamp_id]}::{stamp_ids_rev[selected_clock.stamp_id]}:\nhttps://q.trap.jp/messages/{message_id}"
+        text = f"リマインドが設定されたよ！\n{選択した曜日}: :{day_stamp}:\n選択した時間: :{stamp_ids_rev[selected_ampm.stamp_id]}::{stamp_ids_rev[selected_clock.stamp_id]}:\nhttps://q.trap.jp/messages/{task_message_id}"
         await edit_message.asyncio_detailed(
             message_id=message_id,
             client=client,
