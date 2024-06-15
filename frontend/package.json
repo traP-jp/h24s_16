@@ -18,6 +18,7 @@
     "vuetify": "^3.6.9"
   },
   "devDependencies": {
+    "@iconify/vue": "^4.1.2",
     "@rushstack/eslint-patch": "^1.8.0",
     "@tsconfig/node20": "^20.1.4",
     "@types/node": "^20.12.5",

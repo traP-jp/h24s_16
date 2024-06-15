@@ -5,6 +5,8 @@ from datetime import datetime
 from typing import Annotated, Optional
 from starlette.requests import Request
 from fastapi.security import APIKeyHeader
+import tasq.repository.schemas as schemas
+
 
 app = FastAPI()
 app.add_middleware(
@@ -17,65 +19,42 @@ app.add_middleware(
 
 trao_scheme = APIKeyHeader(name="X-Forwarded-User", scheme_name="traO")
 
-class Task(BaseModel):
-    id: str
-    title: str
-    content: str
-    message_id: str | None
-    group_id: str
-    due_date: datetime | None
-    assigned_user_ids: list[str]
 
-class CreateTaskRequest(BaseModel):
-    title: str
-    content :str
-    group_id: str
-    due_date: datetime | None
-    assigned_user_ids: list[str]
-
-class Label(BaseModel):
-    id: str
-    name: str
-    group_id: str
-
-class CreateLabelRequest(BaseModel):
-    name: str
-    group_id: str
-
-class User(BaseModel):
-    id: str
-    remind_channel_id: str | None
-    periodic_remind_at: str | None
-
-class Group(BaseModel):
-    id: str
-    remind_channel_id: str | None
-    periodic_remind_at: str | None
+class GroupDetails(schemas.Group):
     user_ids: list[str]
+
+class TaskDetails(schemas.Task):
+    assigned_user_ids: list[str]
+
+class CreateTaskReqDTO(schemas.TaskCreate):
+    assigned_user_ids: list[str]
+
+class UpdateTaskReqDTO(schemas.TaskUpdate):
+    assigned_user_ids: list[str]
 
 
 @app.get("/users/me")
-def get_user(user_id: Annotated[str, Depends(trao_scheme)]) -> User:
+def get_user(user_id: Annotated[str, Depends(trao_scheme)]) -> schemas.User:
     pass
 
 @app.get("/users/groups")
-def get_user_groups(user_id: Annotated[str, Depends(trao_scheme)]) -> list[Group]:
+def get_user_groups(user_id: Annotated[str, Depends(trao_scheme)]) -> list[GroupDetails]:
     pass
 
 @app.get("/groups/{group_id}")
-def get_group(group_id: str, user_id: Annotated[str, Depends(trao_scheme)]) -> Group:
+def get_group(group_id: str, user_id: Annotated[str, Depends(trao_scheme)]) -> GroupDetails:
     pass
 
 @app.get("/groups/{group_id}/tasks")
-def get_group_tasks(group_id: str, user_id: Annotated[str, Depends(trao_scheme)]) -> list[Task]:
+def get_group_tasks(group_id: str, user_id: Annotated[str, Depends(trao_scheme)]) -> list[TaskDetails]:
     pass
 
 @app.post("/tasks")
-def create_task(new_task: CreateTaskRequest, user_id: Annotated[str, Depends(trao_scheme)]) -> Task:
+def create_task(new_task: CreateTaskReqDTO, user_id: Annotated[str, Depends(trao_scheme)]) -> TaskDetails:
     pass
 
 @app.patch("/tasks/{task_id}")
-def edit_task(task_id: str, user_id: Annotated[str, Depends(trao_scheme)]):
+def edit_task(task_id: str, new_task: UpdateTaskReqDTO, user_id: Annotated[str, Depends(trao_scheme)]) -> TaskDetails:
     pass
 
 @app.delete("/tasks/{task_id}")
@@ -83,13 +62,14 @@ def delete_task(task_id: str, user_id: Annotated[str, Depends(trao_scheme)]):
     pass
 
 @app.post("/labels")
-def create_label(new_label: CreateLabelRequest, user_id: Annotated[str, Depends(trao_scheme)]) -> Label:
+def create_label(new_label: schemas.LabelCreate, user_id: Annotated[str, Depends(trao_scheme)]) -> schemas.Label:
     pass
 
 @app.patch("/labels/{label_id}")
-def edit_label(label_id: str, user_id: Annotated[str, Depends(trao_scheme)]):
+def edit_label(label_id: str, new_label: schemas.LabelUpdate, user_id: Annotated[str, Depends(trao_scheme)]) -> schemas.Label:
     pass
 
 @app.delete("/labels/{label_id}")
 def delete_label(label_id: str, user_id: Annotated[str, Depends(trao_scheme)]):
     pass
+
