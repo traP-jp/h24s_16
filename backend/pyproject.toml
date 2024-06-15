@@ -8,6 +8,13 @@ authors = [
 dependencies = [
     "fastapi>=0.111.0",
     "sqlalchemy>=2.0.30",
+    "aiotraq>=0.1.2",
+    "aiotraq-bot>=0.1.2",
+    "aiotraq-message>=0.2.0",
+    "urllib3 >= 1.25.3, < 2.1.0",
+    "python-dateutil",
+    "pydantic >= 1.10.5, < 2",
+    "aenum"
 ]
 readme = "README.md"
 requires-python = ">= 3.8"
