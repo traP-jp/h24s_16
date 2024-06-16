@@ -410,18 +410,27 @@ components:
             type: string
           type: array
           title: Assigned User Ids
+        label_ids:
+          items:
+            type: string
+          type: array
+          title: Label Ids
       type: object
       required:
       - title
       - content
       - group_id
       - assigned_user_ids
+      - label_ids
       title: CreateTaskReqDTO
     Group:
       properties:
         id:
           type: string
           title: Id
+        name:
+          type: string
+          title: Name
         remind_channel_id:
           anyOf:
           - type: string
@@ -443,6 +452,7 @@ components:
       type: object
       required:
       - id
+      - name
       - remind_channel_id
       - periodic_remind_at
       - created_at
@@ -453,6 +463,9 @@ components:
         id:
           type: string
           title: Id
+        name:
+          type: string
+          title: Name
         remind_channel_id:
           anyOf:
           - type: string
@@ -479,6 +492,7 @@ components:
       type: object
       required:
       - id
+      - name
       - remind_channel_id
       - periodic_remind_at
       - created_at
@@ -602,6 +616,9 @@ components:
         id:
           type: string
           title: Id
+        name:
+          type: string
+          title: Name
         remind_channel_id:
           anyOf:
           - type: string
@@ -623,8 +640,7 @@ components:
       type: object
       required:
       - id
-      - remind_channel_id
-      - periodic_remind_at
+      - name
       - created_at
       - updated_at
       title: User

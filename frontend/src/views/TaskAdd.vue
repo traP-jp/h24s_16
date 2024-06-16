@@ -6,9 +6,11 @@ import PageContainer from '@/components/PageContainer.vue'
 import apiClient from '@/apis'
 import type { User, CreateTaskReqDTO } from '@/apis/generated'
 import PrimaryButton from '@/components/PrimaryButton.vue'
+import router from '@/router'
 
 const user = ref<User>({
   id: '',
+  name: '',
   remind_channel_id: '',
   periodic_remind_at: '',
   created_at: '',
@@ -24,7 +26,7 @@ const newTask = ref<CreateTaskReqDTO>({
   content: '',
   due_date: '',
   group_id: '',
-  // labels: [],
+  label_ids: [],
   assigned_user_ids: []
 })
 
@@ -40,27 +42,22 @@ const createTask = () => {
     content: '',
     due_date: '',
     group_id: '',
-    // labels: [],
+    label_ids: [],
     assigned_user_ids: []
   }
 }
 </script>
 
 <template>
-  <PageHeader title="新規タスクの追加" :username="user.id" />
+  <PageHeader title="新規タスクの追加" :username="user.name" />
   <div>
     <PageContainer>
       <div class="field">
-        <v-col cols="12" class="d-flex justify-end">
-          <v-btn icon variant="outlined" density="compact">
-            <v-icon>mdi-close</v-icon>
-          </v-btn>
-        </v-col>
         <v-text-field v-model="newTask.title" label="タスク名" clearable />
         <v-text-field v-model="newTask.assigned_user_ids" label="アサイン先(@で指定)" clearable />
         <v-text-field v-model="newTask.due_date" label="期日" readonly clearable>
           <template v-slot:prepend>
-            <v-btn icon @click="openDatePicker">
+            <v-btn class="secondary-button" icon @click="openDatePicker">
               <v-icon>mdi-calendar</v-icon>
             </v-btn>
           </template>
@@ -68,8 +65,9 @@ const createTask = () => {
         </v-text-field>
         <v-textarea rows="5" v-model="newTask.content" label="内容" clearable />
         <v-combobox v-model="newTask.assigned_user_ids" chips multiple label="ラベル" clearable />
-        <v-row class="justify-center">
+        <v-row class="justify-end">
           <div @click="createTask">
+            <button class="secondary-button" @click="router.push({ name: 'TaskList' })">もとのページに戻る</button>
             <PrimaryButton text="作成" />
           </div>
         </v-row>
@@ -82,5 +80,20 @@ const createTask = () => {
 .field {
   width: 80%;
   margin: 0 10%;
+}
+.secondary-button {
+  padding: 8px 16px; /* ボタンの内側の余白 */
+  background-color: #777777; /* ボタンのテキスト色 */
+  border-radius: 5px; /* 枠を丸くする */
+  color: white;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  border: none; /* ボーダーを削除 */
+  cursor: pointer; /* ホバー時にカーソルをポインターにする */
+  top: 0;
+  margin-right: 4px;
+
+  &:hover {
+    background-color: #444444;
+  }
 }
 </style>

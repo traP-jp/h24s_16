@@ -8,10 +8,20 @@ import apiClient from '@/apis'
 import type { User, TaskDetails, Group } from '@/apis/generated'
 
 apiClient.default.getUserUsersMeGet().then((res) => (user.value = res))
-apiClient.default.getUserGroupsUsersGroupsGet().then((res) => (userGroups.value = res))
+apiClient.default
+  .getUserGroupsUsersGroupsGet()
+  .then((res) => (userGroups.value = res))
+  .then(() =>
+    userGroups.value.sort(function (a, b) {
+      if (a.name < b.name) return -1
+      if (a.name > b.name) return 1
+      return 0
+    })
+  )
 
 const user = ref<User>({
   id: '',
+  name: '',
   remind_channel_id: '',
   periodic_remind_at: '',
   created_at: '',
@@ -21,6 +31,7 @@ const user = ref<User>({
 const userGroups = ref<Group[]>([
   {
     id: 'Hackathon 24 spring 16',
+    name: '',
     remind_channel_id: 'ぐおおおおお',
     periodic_remind_at: 'ああああああああ',
     created_at: 'string',
@@ -28,7 +39,7 @@ const userGroups = ref<Group[]>([
   }
 ])
 
-const selectedGroup = ref<string>('自分のタスク全体')
+const selectedGroup = ref<{ name: string; id: string }>({ name: '自分のタスク全体', id: '' })
 
 const tasks = ref<TaskDetails[]>([
   {
@@ -47,22 +58,34 @@ const tasks = ref<TaskDetails[]>([
 </script>
 
 <template>
-  <PageHeader title="タスク一覧" :username="user.id" />
+  <PageHeader title="タスク一覧" :username="user.name" />
   <div class="pageContents">
     <!-- サイドバー -->
     <div class="sidebar">
       <ul>
         <li class="topLevel">
-          <button @click="selectedGroup = '自分のタスク全体'">自分のタスク全体</button>
+          <button
+            class="groups"
+            :class="{ active: selectedGroup.name === '自分のタスク全体' }"
+            @click="selectedGroup = { name: '自分のタスク全体', id: '' }"
+          >
+            自分のタスク全体
+          </button>
         </li>
         <li v-for="group in userGroups" :key="group.id">
-          <button @click="selectedGroup = group.id">{{ group.id }}</button>
+          <button
+            class="groups"
+            :class="{ active: selectedGroup.id === group.id }"
+            @click="selectedGroup = { name: group.name, id: group.id }"
+          >
+            {{ group.name }}
+          </button>
         </li>
       </ul>
     </div>
     <PageContainer>
       <div style="display: flex">
-        <h2>{{ selectedGroup }}</h2>
+        <h2>{{ selectedGroup.name }}</h2>
         <button>自分のタスク</button>
         <button>タグ</button>
         <router-link :to="{ name: 'TaskAdd' }">
@@ -92,9 +115,20 @@ const tasks = ref<TaskDetails[]>([
     list-style-type: none; /* 中黒を消す */
     font-size: 1.05rem;
     font-weight: 700;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .topLevel {
     border-bottom: 2px solid #dddddd;
+    padding-bottom: 20px;
+  }
+  .groups:hover {
+    color: #555555;
+  }
+  .groups.active {
+    color: $color-primary; /* ここで希望の色を指定します */
   }
 }
 

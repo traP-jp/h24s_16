@@ -13,6 +13,8 @@ from tasq.repository.database import get_db
 from sqlalchemy.orm import Session
 from pydantic.aliases import AliasPath
 from pydantic import Field
+from apscheduler.schedulers.background import BackgroundScheduler
+import uuid
 
 import tasq.repository.crud as crud
 import tasq.repository.schemas as schemas
@@ -48,6 +50,7 @@ class TaskDetails(schemas.Task):
 
 class CreateTaskReqDTO(schemas.TaskCreate):
     assigned_user_ids: list[str]
+    label_ids: list[str]
 
 
 class UpdateTaskReqDTO(schemas.TaskUpdate):
@@ -68,7 +71,7 @@ def get_or_create_user(db: Session, user_id: str):
         traq_user = traqUserApi.get_user(user_id)
         if not traq_user:
             raise HTTPException(status_code=404, detail="ユーザーが存在しません")
-        db_user = crud.create_user(db, models.UserCreate(id=user_id, remind_channel_id=None, periodic_remind_at=None))
+        db_user = crud.create_user(db, models.UserCreate(id=user_id, name=traq_user.name, remind_channel_id=None, periodic_remind_at=None))
         db.add(db_user)
     return db_user
 
@@ -80,6 +83,7 @@ def get_user(username: Annotated[str, Depends(trao_scheme)], db: Session = Depen
     if not user:
         return crud.create_user(db, schemas.UserCreate(
             id=traq_user.id,
+            name=traq_user.name,
             remind_channel_id=None,
             periodic_remind_at=None
         ))
@@ -92,8 +96,11 @@ def get_user_groups(username: Annotated[str, Depends(trao_scheme)], db: Session 
     groups = []
     for group_id in traq_user.groups:
         group = crud.read_group(db, group_id)
+        traq_group = traqGroupApi.get_user_group(group_id)
+        if not traq_group:
+            raise HTTPException(status_code=404, detail="グループが存在しません")
         if not group:
-            groups.append(crud.create_group(db, schemas.GroupCreate(id=group_id, remind_channel_id=None, periodic_remind_at=None)))
+            groups.append(crud.create_group(db, schemas.GroupCreate(id=group_id, name=traq_group.name, remind_channel_id=None, periodic_remind_at=None)))
         else:
             groups.append(group)
     return groups
@@ -106,6 +113,9 @@ def get_group(group_id: str, username: Annotated[str, Depends(trao_scheme)], db:
     group = crud.read_group(db, group_id)
     traq_group = traqGroupApi.get_user_group(group_id=group_id)
     if not group:
+        traq_group = traqGroupApi.get_user_group(group_id)
+        if not traq_group:
+            raise HTTPException(status_code=404, detail="グループが存在しません")
         group = crud.create_group(db, schemas.GroupCreate(id=group_id, remind_channel_id = None, periodic_remind_at = None))
     return GroupDetails(user_ids=map(lambda x: x.id, traq_group.members), **group.__dict__)
 
@@ -127,13 +137,21 @@ def create_task(new_task: CreateTaskReqDTO, username: Annotated[str, Depends(tra
     traq_user = get_traq_user_from_name(username)
     if not new_task.group_id in traq_user.groups:
         raise HTTPException(status_code=404, detail="ユーザーがこのグループに所属していません")
-    db_crud_task = schemas.TaskCreate(title=new_task.title, content=new_task.content, message_id=new_task.message_id, due_date=new_task.due_date, group_id=new_task.group_id)
-    db_crud_task = crud.create_task(db, db_crud_task)
-    for db_user_id in new_task.assigned_user_ids:
-        if crud.read_user(db, db_user_id) is None:
-            crud.create_user(db, schemas.UserCreate(id=db_user_id))
-    crud.create_task_assignee(db, db_crud_task, new_task.assigned_user_ids)
-    return TaskDetails(assigned_user_ids=new_task.assigned_user_ids, title=db_crud_task.title, content=db_crud_task.content, message_id=db_crud_task.message_id, due_date=db_crud_task.due_date, group_id=db_crud_task.group_id, id=db_crud_task.id, created_at=db_crud_task.created_at, updated_at=db_crud_task.updated_at)
+    labels = []
+    for label_id in new_task.label_ids:
+        db_label = crud.read_label(db, label_id)
+        if not db_label:
+            raise HTTPException(status_code=404, detail="ラベルが存在しません")
+        labels.append(db_label)
+    assignees = []
+    for user_id in new_task.assigned_user_ids:
+        db_user = get_or_create_user(db, user_id)
+        assignees.append(db_user)
+    task = models.Task(id=str(uuid.uuid4()), title=new_task.title, content=new_task.content, due_date=new_task.due_date, group_id=new_task.group_id, labels=labels, assignees=assignees)
+    db.add(task)
+    db.commit()
+    db.refresh(task)
+    return TaskDetails.model_validate(task)
 
 
 @app.delete("/tasks/{task_id}")
@@ -213,6 +231,8 @@ def put_task_assignee(task_id: str, label_ids: list[str], username: Annotated[st
         db_label = crud.read_label(db, label_id)
         if not db_label:
             raise HTTPException(status_code=404, detail="ラベルが存在しません")
+        if db_label.group.id != task.group.id:
+            raise HTTPException(status_code=400, detail="ラベルは該当グループに属していません")
         task.labels.append(db_label)
     db.commit()
     db.refresh(task)
@@ -247,3 +267,46 @@ def delete_label(label_id: str, username: Annotated[str, Depends(trao_scheme)], 
     if not db_read_label.group_id in traq_user.groups:
         raise HTTPException(status_code=404, detail="ユーザーがこのグループに所属していません")
     return crud.delete_label(db, label_id)
+
+@app.on_event("startup")
+def startup_process():
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(remind_user, "interval", minutes=1)
+    scheduler.add_job(remind_group, "interval", minutes=1)
+    scheduler.start()
+
+def remind_user():
+    now = datetime.now()
+    db = next(get_db())
+    users_to_remind = db.query(models.User).filter(models.User.periodic_remind_at == f"{now.hour}:{now.minute}").all()
+    for user in users_to_remind:
+        tasks = db.query(models.Task).filter(models.Task.assignees.any(user))
+        remind_channel_id = user.remind_channel_id
+        name = user.name
+        message = f"""@{user.name}
+|名前|期日|
+|----|----|
+"""
+        for task in tasks:
+            message += f"""|{task.title}|{task.strftime('%m月%d年 %H時%M分')}
+"""
+        # TODO: メッセージ送ってほしい
+    db.close()
+
+def remind_group():
+    now = datetime.now()
+    db = next(get_db())
+    groups_to_remind = db.query(models.Group).filter(models.Group.periodic_remind_at == f"{now.hour}:{now.minute}").all()
+    for group in groups_to_remind:
+        tasks = db.query(models.Group).filter(models.Group.periodic_remind_at == f"{now.hour}:{now.minute}").all()
+        remind_channel_id = user.remind_channel_id
+        name = user.name
+        message = f"""
+|名前|期日|
+|----|----|
+"""
+        for task in tasks:
+            message += f"""|{task.title}|{task.strftime('%m月%d年 %H時%M分')}
+"""
+        # TODO: メッセージ送ってほしい
+    db.close()
