@@ -76,7 +76,7 @@ const tasks = ref<TaskDetails[]>([
           <button
             class="groups"
             :class="{ active: selectedGroup === group.id }"
-            @click="selectedGroup = group.id"
+            @click="selectedGroup = group.name"
           >
             {{ group.name }}
           </button>
