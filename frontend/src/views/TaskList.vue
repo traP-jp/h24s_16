@@ -35,7 +35,7 @@ const tasks = ref<TaskDetails[]>([
     title: 'タイトル',
     content: '内容',
     message_id: '',
-    due_date: '6月15日',
+    due_date: '6月16日',
     id: '',
     group_id: '',
     created_at: '',

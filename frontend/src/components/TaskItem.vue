@@ -16,7 +16,7 @@ defineProps<Props>()
     <div class="task-title">{{ task.title }}</div>
 
     <div class="task-details">
-      <p>期日：2024年6月15日</p>
+      <p>期日：{{ task.due_date }}</p>
       <!-- 詳細を表示のテキストを追加 -->
       <div v-if="openDetail == false" class="additional-details">
         <button class="detail-button" @click="openDetail = !openDetail">詳細を表示</button>
