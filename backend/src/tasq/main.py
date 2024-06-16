@@ -140,8 +140,7 @@ def create_task(new_task: CreateTaskReqDTO, username: Annotated[str, Depends(tra
     db_crud_task = crud.create_task(db, db_crud_task)
     crud.create_task_label(db, task, label_ids)
     for db_user_id in new_task.assigned_user_ids:
-        if crud.read_user(db, db_user_id) is None:
-            crud.create_user(db, schemas.UserCreate(id=db_user_id))
+        get_or_create_user(db, db_user_id)
     crud.create_task_assignee(db, db_crud_task, new_task.assigned_user_ids)
     return TaskDetails(assigned_user_ids=new_task.assigned_user_ids, title=db_crud_task.title, content=db_crud_task.content, message_id=db_crud_task.message_id, due_date=db_crud_task.due_date, group_id=db_crud_task.group_id, id=db_crud_task.id, created_at=db_crud_task.created_at, updated_at=db_crud_task.updated_at)
 
