@@ -332,7 +332,7 @@ async def remind_group():
     db = next(get_db())
     groups_to_remind = db.query(models.Group).filter(models.Group.periodic_remind_at == now).all()
     for group in groups_to_remind:
-        tasks = db.query(models.Task).filter(models.Task.group.id == group.id).all()
+        tasks = db.query(models.Task).filter(models.Task.group_id == group.id).all()
         remind_channel_id = group.remind_channel_id
         message = f"""@{group.name}
 |名前|期日|
