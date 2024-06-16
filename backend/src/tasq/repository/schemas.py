@@ -6,7 +6,7 @@ class TaskBase(BaseModel):
     title: str
     content: str
     message_id: str | None = None
-    due_date: str | None = None
+    due_date: datetime | None = None
 
 
 class TaskCreate(TaskBase):
@@ -22,7 +22,7 @@ class Task(TaskBase):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class LabelBase(BaseModel):
     name: str
@@ -40,6 +40,9 @@ class Label(LabelBase):
     created_at: datetime
     updated_at: datetime
 
+    class Config:
+        from_attributes = True
+
 class UserBase(BaseModel):
     id: str
     remind_channel_id: str | None
@@ -54,6 +57,9 @@ class UserUpdate(UserBase):
 class User(UserBase):
     created_at: datetime
     updated_at: datetime
+
+    class Config:
+        from_attributes = True
 
 class GroupBase(BaseModel):
     id: str
@@ -70,6 +76,9 @@ class Group(GroupBase):
     created_at: datetime
     updated_at: datetime
 
+    class Config:
+        from_attributes = True
+
 class TaskAssigneeBase(BaseModel):
     task_id: str
     user_id: str
@@ -83,6 +92,9 @@ class TaskAssigneeUpdate(TaskAssigneeBase):
 class TaskAssignee(TaskAssigneeBase):
     created_at: datetime
     updated_at: datetime
+
+    class Config:
+        from_attributes = True
 
 # user+group: c+r+u
 
@@ -99,3 +111,6 @@ class TaskLabelUpdate(TaskLabelBase):
 class TaskLabel(TaskLabelBase):
     created_at: datetime
     updated_at: datetime
+
+    class Config:
+        from_attributes = True

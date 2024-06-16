@@ -31,7 +31,19 @@ const userGroups = ref<GroupDetails[]>([
 
 const selectedGroup = ref<string>('自分のタスク全体')
 
-const tasks = ref<TaskDetails[]>([])
+const tasks = ref<TaskDetails[]>([
+  {
+    title: 'タイトル',
+    content: '内容',
+    message_id: '',
+    due_date: '6月15日',
+    id: '',
+    group_id: '',
+    created_at: '',
+    updated_at: '',
+    assigned_user_ids: ['ayana']
+  }
+])
 </script>
 
 <template>
@@ -40,19 +52,23 @@ const tasks = ref<TaskDetails[]>([])
     <!-- サイドバー -->
     <div class="sidebar">
       <ul>
-        <li>
+        <li class="topLevel">
           <button @click="selectedGroup = '自分のタスク全体'">自分のタスク全体</button>
         </li>
         <li v-for="group in userGroups" :key="group.id">
           <button @click="selectedGroup = group.id">{{ group.id }}</button>
         </li>
       </ul>
-      <router-link :to="{ name: 'TaskAdd' }">
-        <PrimaryButton text="新規タスクを追加" />
-      </router-link>
     </div>
     <PageContainer>
-      {{ selectedGroup }}
+      <div style="display: flex">
+        <h2>{{ selectedGroup }}</h2>
+        <button>自分のタスク</button>
+        <button>タグ</button>
+        <router-link :to="{ name: 'TaskAdd' }">
+          <PrimaryButton text="新規タスクを追加" />
+        </router-link>
+      </div>
       <!-- タスク一覧表示 -->
       <ul>
         <li v-for="task in tasks" :key="task.id">
@@ -71,23 +87,15 @@ const tasks = ref<TaskDetails[]>([])
   height: 100%;
   padding: 60px 30px; /* Adjust this value to match the height of your header */
   overflow: auto;
-}
-
-.sidebar li {
-  margin-bottom: 20px; /* Adjust this value to increase or decrease the space */
-}
-
-.task-container {
-  border: none;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-  border-radius: 10px; /* 枠を丸くする */
-  padding: 10px;
-  margin: 15px;
-  // margin-left: 230px;
-  // margin-right: 30px;
-  /* margin-right: 30px; */
-  background-color: white; /* 背景色を変更する */
-  /* width: calc(100% - 230px);  */
+  li {
+    padding: 10px 0; /* Adjust this value to increase or decrease the space */
+    list-style-type: none; /* 中黒を消す */
+    font-size: 1.05rem;
+    font-weight: 700;
+  }
+  .topLevel {
+    border-bottom: 2px solid #dddddd;
+  }
 }
 
 .task-title {
@@ -95,64 +103,15 @@ const tasks = ref<TaskDetails[]>([])
   font-size: 1.2em; /* フォントサイズを20%大きくする */
 }
 
-ul {
-  list-style-type: none; /* 中黒を消す */
-}
-
-/* 詳細ボタンのスタイル */
-.task-details {
-  display: flex;
-  justify-content: space-between; /* 左右にコンテンツを分散 */
-  align-items: center; /* 中央揃え */
-}
-
-.detail-button {
-  padding: 8px 16px; /* ボタンの内側の余白 */
-  color: $color-primary; /* ボタンのテキスト色 */
-  border: none; /* ボーダーを削除 */
-  cursor: pointer; /* ホバー時にカーソルをポインターにする */
-  margin-bottom: 3px; /* ボタンと詳細情報の間の余白 */
-}
-
-.detail-button:hover {
-  text-decoration: underline; /* 下線を表示 */
-}
-
-.close-button {
-  padding: 8px 16px; /* ボタンの内側の余白 */
-  color: #6aa2b4; /* ボタンのテキスト色 */
-  cursor: pointer; /* ホバー時にカーソルをポインターにする */
-}
-
-.close-button:hover {
-  text-decoration: underline; /* 下線を表示 */
-}
-
-/* グループ選択 */
-.groupSelect-button {
-  font-weight: bold; /* 太文字にする */
-}
-
-.groupSelect-button:hover {
-  text-decoration: underline; /* 下線を表示 */
-}
 .pageContents {
   height: calc(100% - 5rem);
   display: grid;
   grid-template-columns: 1fr 5fr;
-  align-content: center;
-}
-
-@media (min-width: 1024px) {
-  .about {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
+  h2 {
+    flex-grow: 1;
   }
-  .task-container {
-    margin-left: 230px; /* サイドバーの幅 + 30px の余白を確保 */
-    margin-right: 30px;
-    /* width: calc(100% - 230px); 全体の幅からサイドバーの幅を引く */
+  li {
+    list-style-type: none; /* 中黒を消す */
   }
 }
 </style>

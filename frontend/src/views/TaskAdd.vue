@@ -1,6 +1,21 @@
 <script setup lang="ts">
 import '@mdi/font/css/materialdesignicons.css'
 import { ref } from 'vue'
+import PageHeader from '@/components/PageHeader.vue'
+import PageContainer from '@/components/PageContainer.vue'
+import apiClient from '@/apis'
+import type { User } from '@/apis/generated'
+import PrimaryButton from '@/components/PrimaryButton.vue'
+
+const user = ref<User>({
+  id: '',
+  remind_channel_id: '',
+  periodic_remind_at: '',
+  created_at: '',
+  updated_at: ''
+})
+
+apiClient.default.getUserUsersMeGet().then((res) => (user.value = res))
 
 interface task {
   taskName: string
@@ -45,38 +60,40 @@ const createTask = () => {
 </script>
 
 <template>
-  <div id="app">
-    <v-app>
-      <v-main class="bg-grey-lighten-3">
-        <div class="d-flex align-center justify-center fill-height">
-        <v-layout>
-          <v-card height="45em" width="60em" variant="elevated" class="mx-auto bg-white">
-            <v-container>
-              <v-row class="justify-end">
-                <v-btn icon variant="flat">
-                  <v-icon>mdi-close-circle-outline</v-icon>
-                </v-btn>
-              </v-row>
-              <v-text-field v-model="taskName" label="タスク名" clearable></v-text-field>
-              <v-text-field v-model="assignee" label="アサイン先(@で指定)" clearable></v-text-field>
-              <v-text-field v-model="deadline" label="期日" readonly clearable>
-                <template v-slot:prepend>
-                  <v-btn icon @click="openDatePicker">
-                    <v-icon>mdi-calendar</v-icon>
-                  </v-btn>
-                </template>
-                <v-date-picker v-if="datePickerDisplay === true"></v-date-picker>
-              </v-text-field>
-              <v-textarea rows="5" v-model="content" label="内容"  clearable></v-textarea>
-              <v-combobox v-model="tags" chips multiple label="タグ" clearable></v-combobox>
-              <v-row class="justify-center">
-                <v-btn color="primary" variant="flat" @click="createTask"> 作成 </v-btn>
-              </v-row>
-            </v-container>
-          </v-card>
-        </v-layout>
-        </div>
-      </v-main>
-    </v-app>
+  <PageHeader title="新規タスクの追加" :username="user.id" />
+  <div>
+    <PageContainer>
+      <div class="field">
+        <v-row class="justify-end">
+          <v-btn icon variant="flat">
+            <v-icon>mdi-close-circle-outline</v-icon>
+          </v-btn>
+        </v-row>
+        <v-text-field v-model="taskName" label="タスク名" clearable />
+        <v-text-field v-model="assignee" label="アサイン先(@で指定)" clearable />
+        <v-text-field v-model="deadline" label="期日" readonly clearable>
+          <template v-slot:prepend>
+            <v-btn icon @click="openDatePicker">
+              <v-icon>mdi-calendar</v-icon>
+            </v-btn>
+          </template>
+          <v-date-picker v-if="datePickerDisplay === true"></v-date-picker>
+        </v-text-field>
+        <v-textarea rows="5" v-model="content" label="内容" clearable />
+        <v-combobox v-model="tags" chips multiple label="タグ" clearable />
+        <v-row class="justify-center">
+          <div @click="createTask">
+            <PrimaryButton text="作成" />
+          </div>
+        </v-row>
+      </div>
+    </PageContainer>
   </div>
 </template>
+
+<style lang="scss" scoped>
+.field {
+  width: 80%;
+  margin: 0 10%;
+}
+</style>

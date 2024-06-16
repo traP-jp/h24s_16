@@ -10,7 +10,7 @@ main {
   height: 100%;
   max-width: 1024px;
   margin: 0 auto;
-  padding: 4rem 3rem 3rem;
+  padding: 2rem 1.5rem;
   overflow-x: auto;
   overflow-y: auto;
 }
