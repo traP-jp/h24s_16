@@ -117,16 +117,16 @@ def create_task_assignee(db: Session, task: schemas.Task, users: list[str]):
     return db_task_assignee
 
 def read_task_assignee_from_task(db: Session, task_id: str):
-    db_task_assignee = db.query(models.task_assignee_association).filter_by(models.task_assignee_association.task_id == task_id).all()
+    db_task_assignee = db.query(models.task_assignee_association).filter(models.task_assignee_association.task_id == task_id).all()
     # TODO ?
     return db_task_assignee
 
 def read_task_assignee_from_user(db: Session, user_id: str):
-    db_task_assignee = db.query(models.task_assignee_association).filter_by(user_id in models.task_assignee_association.user_id).all()
+    db_task_assignee = db.query(models.task_assignee_association).filter(user_id in models.task_assignee_association.user_id).all()
     return db_task_assignee
 
 def update_task_assigee(db: Session, task: schemas.Task, users: list[str]):
-    db_task_assignee = db.query(models.task_assignee_association).filter_by(models.task_assignee_association.task_id == task.id).first()
+    db_task_assignee = db.query(models.task_assignee_association).filter(models.task_assignee_association.task_id == task.id).first()
     # TODO update for list of users
     if db_task_assignee:
         db_task_assignee.user_id = users

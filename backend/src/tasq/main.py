@@ -25,7 +25,7 @@ app.add_middleware(
 
 trao_scheme = APIKeyHeader(name="X-Forwarded-User", scheme_name="traO")
 
-traqapi_config = traqapi.Configuration(access_token="")
+traqapi_config = traqapi.Configuration(access_token="Uc5ZrONZChvN8myK1jaiXYkNEtxvES70MVHt")
 traqapi_config.verify_ssl = False
 traqapi_client = traqapi.ApiClient(configuration=traqapi_config)
 traqUserApi = traqapi.UserApi(api_client=traqapi_client)
@@ -52,7 +52,9 @@ def get_traq_user_from_name(name: str):
     traq_user = traqUserApi.get_users(name=name)
     if len(traq_user) != 1:
         raise HTTPException(status_code=404, detail="ユーザーが存在しません")
-    return traq_user[0]
+    user_id = traq_user[0].id
+    traq_user = traqUserApi.get_user(user_id=user_id)
+    return traq_user
 
 
 @app.get("/users/me")
@@ -126,15 +128,30 @@ def delete_task(task_id: str, username: Annotated[str, Depends(trao_scheme)], db
 
 @app.post("/labels")
 def create_label(new_label: schemas.LabelCreate, username: Annotated[str, Depends(trao_scheme)], db: Session = Depends(get_db)) -> schemas.Label:
-    return crud.create_label(db, new_label)
+    traq_user = get_traq_user_from_name(username)
+    if new_label.group_id in traq_user.groups:
+        return crud.create_label(db, new_label)
+    else:
+        raise HTTPException(status_code=404, detail="ユーザーがこのグループに所属していません")
 
 
 @app.patch("/labels/{label_id}")
 def edit_label(label_id: str, new_label: schemas.LabelUpdate, username: Annotated[str, Depends(trao_scheme)], db: Session = Depends(get_db)) -> schemas.Label:
+    traq_user = get_traq_user_from_name(username)
+    db_read_label = crud.read_label(db, label_id)
+    if db_read_label is None:
+        raise HTTPException(status_code=404, detail="このラベルが存在しません")
+    if not db_read_label.group_id in traq_user.groups:
+        raise HTTPException(status_code=404, detail="ユーザーがこのグループに所属していません")
     return crud.update_label(db, label_id, new_label)
 
 
 @app.delete("/labels/{label_id}")
 def delete_label(label_id: str, username: Annotated[str, Depends(trao_scheme)], db: Session = Depends(get_db)):
+    traq_user = get_traq_user_from_name(username)
+    db_read_label = crud.read_label(db, label_id)
+    if db_read_label is None:
+        raise HTTPException(status_code=404, detail="このラベルが存在しません")
+    if not db_read_label.group_id in traq_user.groups:
+        raise HTTPException(status_code=404, detail="ユーザーがこのグループに所属していません")
     return crud.delete_label(db, label_id)
-
