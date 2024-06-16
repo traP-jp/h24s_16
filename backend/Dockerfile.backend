@@ -1,5 +1,9 @@
 FROM python:slim
 
+RUN apt-get update -y && \
+    apt-get install -y libmariadb-dev gcc && \
+    rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 COPY docker-entrypoint.backend.sh /docker-entrypoint.sh
