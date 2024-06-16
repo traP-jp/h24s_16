@@ -4,7 +4,7 @@ import { ref } from 'vue'
 import PageHeader from '@/components/PageHeader.vue'
 import PageContainer from '@/components/PageContainer.vue'
 import apiClient from '@/apis'
-import type { User } from '@/apis/generated'
+import type { User, TaskDetails } from '@/apis/generated'
 import PrimaryButton from '@/components/PrimaryButton.vue'
 
 const user = ref<User>({
@@ -17,45 +17,42 @@ const user = ref<User>({
 
 apiClient.default.getUserUsersMeGet().then((res) => (user.value = res))
 
-interface task {
-  taskName: string
-  assignee: string
-  deadline: string
-  content: string
-  tags: string[]
-}
-
 const datePickerDisplay = ref(false)
 const taskName = ref('')
 const assignee = ref('')
 const deadline = ref('')
 const content = ref('')
 const tags = ref<string[]>([])
-const tasks = ref<task[]>([])
+const tasks = ref<TaskDetails[]>([])
+
+const newTask = ref<TaskDetails>({
+  title: 'string',
+  content: 'string',
+  due_date: 'string',
+  id: 'string',
+  group_id: 'string',
+  created_at: 'string',
+  updated_at: 'string',
+  assigned_user_ids: []
+})
 
 const openDatePicker = () => {
   datePickerDisplay.value = !datePickerDisplay.value
 }
 
 const createTask = () => {
-  // 新しいタスクオブジェクトを作成
-  const newTask: task = {
-    taskName: taskName.value,
-    assignee: assignee.value,
-    deadline: deadline.value,
-    content: content.value,
-    tags: tags.value
+  apiClient.default.createTaskTasksPost(newTask.value).catch((v) => console.log(v))
+
+  newTask.value = {
+    title: '',
+    content: '',
+    due_date: '',
+    id: '',
+    group_id: '',
+    created_at: '',
+    updated_at: '',
+    assigned_user_ids: []
   }
-
-  // タスクリストに追加
-  tasks.value.push(newTask)
-
-  // 入力フィールドをクリア
-  taskName.value = ''
-  assignee.value = ''
-  deadline.value = ''
-  content.value = ''
-  tags.value = []
 }
 </script>
 
@@ -69,9 +66,9 @@ const createTask = () => {
             <v-icon>mdi-close-circle-outline</v-icon>
           </v-btn>
         </v-row>
-        <v-text-field v-model="taskName" label="タスク名" clearable />
-        <v-text-field v-model="assignee" label="アサイン先(@で指定)" clearable />
-        <v-text-field v-model="deadline" label="期日" readonly clearable>
+        <v-text-field v-model="newTask.id" label="タスク名" clearable />
+        <v-text-field v-model="newTask.assigned_user_ids" label="アサイン先(@で指定)" clearable />
+        <v-text-field v-model="newTask.due_date" label="期日" readonly clearable>
           <template v-slot:prepend>
             <v-btn icon @click="openDatePicker">
               <v-icon>mdi-calendar</v-icon>
@@ -79,8 +76,8 @@ const createTask = () => {
           </template>
           <v-date-picker v-if="datePickerDisplay === true"></v-date-picker>
         </v-text-field>
-        <v-textarea rows="5" v-model="content" label="内容" clearable />
-        <v-combobox v-model="tags" chips multiple label="タグ" clearable />
+        <v-textarea rows="5" v-model="newTask.content" label="内容" clearable />
+        <v-combobox v-model="newTask.group_id" chips multiple label="タグ" clearable />
         <v-row class="justify-center">
           <div @click="createTask">
             <PrimaryButton text="作成" />
