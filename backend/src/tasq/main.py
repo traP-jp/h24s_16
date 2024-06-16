@@ -41,6 +41,7 @@ traqGroupApi = traqapi.GroupApi(api_client=traqapi_client)
 
 class GroupDetails(schemas.Group):
     user_ids: list[str]
+    labels: list[schemas.Label]
 
 
 class TaskDetails(schemas.Task):
@@ -117,6 +118,7 @@ def get_group(group_id: str, username: Annotated[str, Depends(trao_scheme)], db:
         if not traq_group:
             raise HTTPException(status_code=404, detail="グループが存在しません")
         group = crud.create_group(db, schemas.GroupCreate(id=group_id, remind_channel_id = None, periodic_remind_at = None))
+    labels = group.labels
     return GroupDetails(user_ids=map(lambda x: x.id, traq_group.members), **group.__dict__)
 
 
