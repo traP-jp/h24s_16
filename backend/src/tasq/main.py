@@ -72,7 +72,7 @@ def get_or_create_user(db: Session, user_id: str):
         traq_user = traqUserApi.get_user(user_id)
         if not traq_user:
             raise HTTPException(status_code=404, detail="ユーザーが存在しません")
-        db_user = crud.create_user(db, models.UserCreate(id=user_id, name=traq_user.name, remind_channel_id=None, periodic_remind_at=None))
+        db_user = crud.create_user(db, schemas.UserCreate(id=user_id, name=traq_user.name, remind_channel_id=None, periodic_remind_at=None))
         db.add(db_user)
     return db_user
 
