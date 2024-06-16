@@ -106,6 +106,10 @@ const tasks = ref<TaskDetails[]>([
     list-style-type: none; /* 中黒を消す */
     font-size: 1.05rem;
     font-weight: 700;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .topLevel {
     border-bottom: 2px solid #dddddd;
@@ -115,8 +119,8 @@ const tasks = ref<TaskDetails[]>([
     color: #555555;
   }
   .groups.active {
-  color: $color-primary; /* ここで希望の色を指定します */
-}
+    color: $color-primary; /* ここで希望の色を指定します */
+  }
 }
 
 .task-title {
