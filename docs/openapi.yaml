@@ -489,6 +489,11 @@ components:
             type: string
           type: array
           title: User Ids
+        labels:
+          items:
+            "$ref": "#/components/schemas/Label"
+          type: array
+          title: Labels
       type: object
       required:
       - id
@@ -498,6 +503,7 @@ components:
       - created_at
       - updated_at
       - user_ids
+      - labels
       title: GroupDetails
     HTTPValidationError:
       properties:
