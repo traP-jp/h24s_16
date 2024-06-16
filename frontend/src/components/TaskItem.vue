@@ -25,15 +25,15 @@ defineProps<Props>()
 
     <!-- 詳細情報を条件付きで表示 -->
     <div v-if="openDetail" class="additional-details">
-    <!-- 隠されていた詳細情報 -->
+      <!-- 隠されていた詳細情報 -->
       {{ task.content }}
     </div>
 
     <div v-if="openDetail" class="additional-details">
-      <div class = "button-right">
+      <div class="button-right">
         <button class="close-button" @click="openDetail = !openDetail">閉じる</button>
+      </div>
     </div>
-  </div>
   </div>
 </template>
 
@@ -46,7 +46,6 @@ defineProps<Props>()
   margin: 15px 30px;
   background-color: white; /* 背景色を変更する */
   /* width: calc(100% - 230px);  */
-
 }
 
 .task-title {
@@ -83,8 +82,7 @@ defineProps<Props>()
   text-decoration: underline;
 }
 
-.button-right{
-	text-align: right;
+.button-right {
+  text-align: right;
 }
-
 </style>
