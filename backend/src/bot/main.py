@@ -42,7 +42,8 @@ async def on_reply(am: TraqMessage, payload: MessageCreatedPayload):
     print(mens)
     if mens is None:
         return
-    mens_data = json.loads(mens.group(1))
+    mens_raw = mens.group(1)
+    mens_data = json.loads(mens_raw)
     print(mens_data)
     if "type" not in mens_data or mens_data["type"] != "group":
         return
@@ -54,7 +55,7 @@ async def on_reply(am: TraqMessage, payload: MessageCreatedPayload):
         am.write("投稿を引用すると、タスクに追加できるよ！")
         return
     message_id = message_text.group(1)
-    am.write(f"!{mens.group(1)}\nこの投稿をタスクに追加するよ！\n{リマインドしたい曜日を選択してね}！直近一週間以降やリマインドがいらない場合は :day7_darkday:を選択してね！ \nhttps://q.trap.jp/messages/{message_id}")
+    am.write(f"!{mens_raw}\nこの投稿をタスクに追加するよ！\n{リマインドしたい曜日を選択してね}！直近一週間以降やリマインドがいらない場合は :day7_darkday:を選択してね！ \nhttps://q.trap.jp/messages/{message_id}")
 
     now = datetime.datetime.now(tz=tz_jst_name)
     now_weekday = (now.weekday() + 1) % 7
@@ -75,7 +76,8 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
     mens = re.search(r"!({[^}]*})", res.content)
     if mens is None:
         return
-    mens_data = json.loads(mens.group(1))
+    mens_raw = mens.group(1)
+    mens_data = json.loads(mens_raw)
     if "type" not in mens_data or mens_data["type"] != "group":
         return
 
@@ -116,11 +118,11 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
             )
             return
 
-        text = f"{mens['raw']}\nこの投稿をタスクに追加するよ！\n{選択した曜日}: :{stamp_ids_rev[selected_day.stamp_id]}:\n{リマインドしたい時間を選択してね}！\nhttps://q.trap.jp/messages/{task_message_id}"
+        text = f"!{mens_raw}\nこの投稿をタスクに追加するよ！\n{選択した曜日}: :{stamp_ids_rev[selected_day.stamp_id]}:\n{リマインドしたい時間を選択してね}！\nhttps://q.trap.jp/messages/{task_message_id}"
         await edit_message.asyncio_detailed(
             message_id=message_id,
             client=client,
-            body=PostMessageRequest(content=text, embed=True)
+            body=PostMessageRequest(content=text)
         )
 
         for s in daystamps:
@@ -166,11 +168,11 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
                     client=client
                 )
 
-        text = f"{mens['raw']}\n:loading: タスクを設定中だよ！\nhttps://q.trap.jp/messages/{task_message_id}"
+        text = f"!{mens_raw}\n:loading: タスクを設定中だよ！\nhttps://q.trap.jp/messages/{task_message_id}"
         await edit_message.asyncio_detailed(
             message_id=message_id,
             client=client,
-            body=PostMessageRequest(content=text, embed=True)
+            body=PostMessageRequest(content=text)
         )
 
         day_text = re.search(rf"{選択した曜日}: :([^:]+):", res.content)
@@ -208,13 +210,13 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
 
         await asyncio.sleep(1)
 
-        text = f"{mens['raw']}\nタスクが設定されたよ！\n{選択した曜日}: :{day_stamp}:\n選択した時間: :{stamp_ids_rev[selected_ampm.stamp_id]}::{stamp_ids_rev[selected_clock.stamp_id]}:\n"\
+        text = f"!{mens_raw}\nタスクが設定されたよ！\n{選択した曜日}: :{day_stamp}:\n選択した時間: :{stamp_ids_rev[selected_ampm.stamp_id]}::{stamp_ids_rev[selected_clock.stamp_id]}:\n"\
             f"リマインドする時間: {remind_time.strftime('%Y-%m-%d %H:%M:%S')}\n"\
             f"https://q.trap.jp/messages/{task_message_id}"
         await edit_message.asyncio_detailed(
             message_id=message_id,
             client=client,
-            body=PostMessageRequest(content=text, embed=True)
+            body=PostMessageRequest(content=text)
         )
 
 
