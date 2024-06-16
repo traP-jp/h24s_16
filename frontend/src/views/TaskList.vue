@@ -39,7 +39,7 @@ const userGroups = ref<Group[]>([
   }
 ])
 
-const selectedGroup = ref<string>('自分のタスク全体')
+const selectedGroup = ref<{ name: string; id: string }>({ name: '自分のタスク全体', id: '' })
 
 const tasks = ref<TaskDetails[]>([
   {
@@ -66,8 +66,8 @@ const tasks = ref<TaskDetails[]>([
         <li class="topLevel">
           <button
             class="groups"
-            :class="{ active: selectedGroup === '自分のタスク全体' }"
-            @click="selectedGroup = '自分のタスク全体'"
+            :class="{ active: selectedGroup.name === '自分のタスク全体' }"
+            @click="selectedGroup = { name: '自分のタスク全体', id: '' }"
           >
             自分のタスク全体
           </button>
@@ -75,8 +75,8 @@ const tasks = ref<TaskDetails[]>([
         <li v-for="group in userGroups" :key="group.id">
           <button
             class="groups"
-            :class="{ active: selectedGroup === group.id }"
-            @click="selectedGroup = group.id"
+            :class="{ active: selectedGroup.id === group.id }"
+            @click="selectedGroup = { name: group.name, id: group.id }"
           >
             {{ group.name }}
           </button>
@@ -85,7 +85,7 @@ const tasks = ref<TaskDetails[]>([
     </div>
     <PageContainer>
       <div style="display: flex">
-        <h2>{{ selectedGroup }}</h2>
+        <h2>{{ selectedGroup.name }}</h2>
         <button>自分のタスク</button>
         <button>タグ</button>
         <router-link :to="{ name: 'TaskAdd' }">
