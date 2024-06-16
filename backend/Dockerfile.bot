@@ -20,7 +20,7 @@ COPY --from=build /opt/venv /opt/venv
 
 ENV PATH="/opt/venv/bin:$PATH"
 ENV PYTHONUNBUFFERED 1
-ENV PYTHONPATH "${PYTHONPATH}:/workspace"
+ENV PYTHONPATH "${PYTHONPATH}:/workspace:/workspace/src"
 
 VOLUME /data
 
