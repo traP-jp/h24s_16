@@ -75,8 +75,8 @@ const tasks = ref<TaskDetails[]>([
     <PageContainer>
       <div style="display: flex">
         <h2>{{ selectedGroup }}</h2>
-        <button>自分のタスク</button>
-        <button>タグ</button>
+        <button class = "tag">自分のタスク</button>
+        <button class = "tag">タグ</button>
         <router-link :to="{ name: 'TaskAdd' }">
           <PrimaryButton text="新規タスクを追加" />
         </router-link>
@@ -133,4 +133,20 @@ const tasks = ref<TaskDetails[]>([
     list-style-type: none; /* 中黒を消す */
   }
 }
+
+.tag {
+  display: inline-block;
+  padding: 8px 16px; /* ボタンの内側の余白 */
+  border: 1px solid #ccc; /* 灰色の枠線 */
+  border-radius: 30px; /* 角丸の大きさ */
+  background-color: #f9f9f9; /* ボタンの背景色 */
+  color: #333; /* テキストの色 */
+  text-align: center;
+  cursor: pointer;
+}
+
+.tag:hover {
+  background-color: #e6e6e6; /* ホバー時の背景色 */
+}
+
 </style>
