@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from pydantic.aliases import AliasPath
 from pydantic import Field
 from apscheduler.schedulers.background import BackgroundScheduler
+import uuid
 
 import tasq.repository.crud as crud
 import tasq.repository.schemas as schemas
@@ -137,20 +138,20 @@ def create_task(new_task: CreateTaskReqDTO, username: Annotated[str, Depends(tra
     if not new_task.group_id in traq_user.groups:
         raise HTTPException(status_code=404, detail="ユーザーがこのグループに所属していません")
     labels = []
-    for label_id in label_ids:
+    for label_id in new_task.label_ids:
         db_label = crud.read_label(db, label_id)
         if not db_label:
             raise HTTPException(status_code=404, detail="ラベルが存在しません")
-        if db_label.group.id != new_task.group_id:
-            raise HTTPException(status=400, detail="ラベルが該当グループに属していません")
         labels.append(db_label)
-    db_crud_task = schemas.TaskCreate(title=new_task.title, content=new_task.content, message_id=new_task.message_id, due_date=new_task.due_date, group_id=new_task.group_id, labels=labels)
-    db_crud_task = crud.create_task(db, db_crud_task)
-    for db_user_id in new_task.assigned_user_ids:
-        if crud.read_user(db, db_user_id) is None:
-            crud.create_user(db, schemas.UserCreate(id=db_user_id))
-    crud.create_task_assignee(db, db_crud_task, new_task.assigned_user_ids)
-    return TaskDetails(assigned_user_ids=new_task.assigned_user_ids, title=db_crud_task.title, content=db_crud_task.content, message_id=db_crud_task.message_id, due_date=db_crud_task.due_date, group_id=db_crud_task.group_id, id=db_crud_task.id, created_at=db_crud_task.created_at, updated_at=db_crud_task.updated_at)
+    assignees = []
+    for user_id in new_task.assigned_user_ids:
+        db_user = get_or_create_user(db, user_id)
+        assignees.append(db_user)
+    task = models.Task(id=str(uuid.uuid4()), title=new_task.title, content=new_task.content, due_date=new_task.due_date, group_id=new_task.group_id, labels=labels, assignees=assignees)
+    db.add(task)
+    db.commit()
+    db.refresh(task)
+    return TaskDetails.model_validate(task)
 
 
 @app.delete("/tasks/{task_id}")
