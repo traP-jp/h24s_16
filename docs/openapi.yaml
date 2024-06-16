@@ -28,7 +28,7 @@ paths:
             application/json:
               schema:
                 items:
-                  "$ref": "#/components/schemas/GroupDetails"
+                  "$ref": "#/components/schemas/Group"
                 type: array
                 title: Response Get User Groups Users Groups Get
       security:
@@ -37,13 +37,15 @@ paths:
     get:
       summary: Get Group
       operationId: get_group_groups__group_id__get
+      security:
+      - traO: []
       parameters:
-      - required: true
+      - name: group_id
+        in: path
+        required: true
         schema:
           type: string
           title: Group Id
-        name: group_id
-        in: path
       responses:
         '200':
           description: Successful Response
@@ -57,28 +59,28 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/HTTPValidationError"
-      security:
-      - traO: []
   "/groups/{group_id}/tasks":
     get:
       summary: Get Group Tasks
       operationId: get_group_tasks_groups__group_id__tasks_get
+      security:
+      - traO: []
       parameters:
-      - required: true
+      - name: group_id
+        in: path
+        required: true
         schema:
           type: string
           title: Group Id
-        name: group_id
-        in: path
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
               schema:
+                type: array
                 items:
                   "$ref": "#/components/schemas/TaskDetails"
-                type: array
                 title: Response Get Group Tasks Groups  Group Id  Tasks Get
         '422':
           description: Validation Error
@@ -86,8 +88,6 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/HTTPValidationError"
-      security:
-      - traO: []
   "/tasks":
     post:
       summary: Create Task
@@ -117,13 +117,15 @@ paths:
     delete:
       summary: Delete Task
       operationId: delete_task_tasks__task_id__delete
+      security:
+      - traO: []
       parameters:
-      - required: true
+      - name: task_id
+        in: path
+        required: true
         schema:
           type: string
           title: Task Id
-        name: task_id
-        in: path
       responses:
         '200':
           description: Successful Response
@@ -136,39 +138,168 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/HTTPValidationError"
+  "/tasks/{task_id}/title":
+    patch:
+      summary: Patch Task Title
+      operationId: patch_task_title_tasks__task_id__title_patch
       security:
       - traO: []
-    patch:
-      summary: Edit Task
-      operationId: edit_task_tasks__task_id__patch
       parameters:
-      - required: true
+      - name: task_id
+        in: path
+        required: true
         schema:
           type: string
           title: Task Id
-        name: task_id
-        in: path
-      requestBody:
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/UpdateTaskReqDTO"
+      - name: title
+        in: query
         required: true
+        schema:
+          type: string
+          title: Title
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
-              schema:
-                "$ref": "#/components/schemas/TaskDetails"
+              schema: {}
         '422':
           description: Validation Error
           content:
             application/json:
               schema:
                 "$ref": "#/components/schemas/HTTPValidationError"
+  "/tasks/{task_id}/content":
+    patch:
+      summary: Patch Task Content
+      operationId: patch_task_content_tasks__task_id__content_patch
       security:
       - traO: []
+      parameters:
+      - name: task_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Task Id
+      - name: content
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Content
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/HTTPValidationError"
+  "/tasks/{task_id}/due_date":
+    patch:
+      summary: Patch Task Due Date
+      operationId: patch_task_due_date_tasks__task_id__due_date_patch
+      security:
+      - traO: []
+      parameters:
+      - name: task_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Task Id
+      - name: due_date
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+          title: Due Date
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/HTTPValidationError"
+  "/tasks/{task_id}/assignees":
+    patch:
+      summary: Put Task Assignee
+      operationId: put_task_assignee_tasks__task_id__assignees_patch
+      security:
+      - traO: []
+      parameters:
+      - name: task_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Task Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+              title: User Ids
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/HTTPValidationError"
+  "/tasks/{task_id}/labels":
+    patch:
+      summary: Put Task Assignee
+      operationId: put_task_assignee_tasks__task_id__labels_patch
+      security:
+      - traO: []
+      parameters:
+      - name: task_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Task Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+              title: Label Ids
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/HTTPValidationError"
   "/labels":
     post:
       summary: Create Label
@@ -195,46 +326,24 @@ paths:
       security:
       - traO: []
   "/labels/{label_id}":
-    delete:
-      summary: Delete Label
-      operationId: delete_label_labels__label_id__delete
-      parameters:
-      - required: true
-        schema:
-          type: string
-          title: Label Id
-        name: label_id
-        in: path
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/HTTPValidationError"
-      security:
-      - traO: []
     patch:
       summary: Edit Label
       operationId: edit_label_labels__label_id__patch
+      security:
+      - traO: []
       parameters:
-      - required: true
+      - name: label_id
+        in: path
+        required: true
         schema:
           type: string
           title: Label Id
-        name: label_id
-        in: path
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               "$ref": "#/components/schemas/LabelUpdate"
-        required: true
       responses:
         '200':
           description: Successful Response
@@ -248,8 +357,30 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/HTTPValidationError"
+    delete:
+      summary: Delete Label
+      operationId: delete_label_labels__label_id__delete
       security:
       - traO: []
+      parameters:
+      - name: label_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Label Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/HTTPValidationError"
 components:
   schemas:
     CreateTaskReqDTO:
@@ -261,10 +392,15 @@ components:
           type: string
           title: Content
         message_id:
-          type: string
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Message Id
         due_date:
-          type: string
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
           title: Due Date
         group_id:
           type: string
@@ -281,22 +417,59 @@ components:
       - group_id
       - assigned_user_ids
       title: CreateTaskReqDTO
+    Group:
+      properties:
+        id:
+          type: string
+          title: Id
+        remind_channel_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Remind Channel Id
+        periodic_remind_at:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Periodic Remind At
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - id
+      - remind_channel_id
+      - periodic_remind_at
+      - created_at
+      - updated_at
+      title: Group
     GroupDetails:
       properties:
         id:
           type: string
           title: Id
         remind_channel_id:
-          type: string
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Remind Channel Id
         periodic_remind_at:
-          type: string
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Periodic Remind At
         created_at:
           type: string
+          format: date-time
           title: Created At
         updated_at:
           type: string
+          format: date-time
           title: Updated At
         user_ids:
           items:
@@ -334,9 +507,11 @@ components:
           title: Group Id
         created_at:
           type: string
+          format: date-time
           title: Created At
         updated_at:
           type: string
+          format: date-time
           title: Updated At
       type: object
       required:
@@ -377,10 +552,15 @@ components:
           type: string
           title: Content
         message_id:
-          type: string
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Message Id
         due_date:
-          type: string
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
           title: Due Date
         id:
           type: string
@@ -390,15 +570,22 @@ components:
           title: Group Id
         created_at:
           type: string
+          format: date-time
           title: Created At
         updated_at:
           type: string
+          format: date-time
           title: Updated At
-        assigned_user_ids:
+        labels:
           items:
-            type: string
+            "$ref": "#/components/schemas/Label"
           type: array
-          title: Assigned User Ids
+          title: Labels
+        assigned_users:
+          items:
+            "$ref": "#/components/schemas/User"
+          type: array
+          title: Assigned Users
       type: object
       required:
       - title
@@ -407,49 +594,31 @@ components:
       - group_id
       - created_at
       - updated_at
-      - assigned_user_ids
+      - labels
+      - assigned_users
       title: TaskDetails
-    UpdateTaskReqDTO:
-      properties:
-        title:
-          type: string
-          title: Title
-        content:
-          type: string
-          title: Content
-        message_id:
-          type: string
-          title: Message Id
-        due_date:
-          type: string
-          title: Due Date
-        assigned_user_ids:
-          items:
-            type: string
-          type: array
-          title: Assigned User Ids
-      type: object
-      required:
-      - title
-      - content
-      - assigned_user_ids
-      title: UpdateTaskReqDTO
     User:
       properties:
         id:
           type: string
           title: Id
         remind_channel_id:
-          type: string
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Remind Channel Id
         periodic_remind_at:
-          type: string
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Periodic Remind At
         created_at:
           type: string
+          format: date-time
           title: Created At
         updated_at:
           type: string
+          format: date-time
           title: Updated At
       type: object
       required:

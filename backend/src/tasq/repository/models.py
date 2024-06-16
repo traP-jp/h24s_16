@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DateTime, ForeignKey, func
+from sqlalchemy import Column, String, DateTime, ForeignKey, func, Table
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -10,6 +10,19 @@ class TimestampMixin:
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
+task_label_association = Table(
+    "task_labels",
+    Base.metadata,
+    Column("task_id", String, ForeignKey("tasks.id"), primary_key=True),
+    Column("label_id", String, ForeignKey("labels.id"), primary_key=True),
+)
+
+task_assignee_association = Table(
+    "task_assignees",
+    Base.metadata,
+    Column("task_id", String, ForeignKey("tasks.id"), primary_key=True),
+    Column("user_id", String, ForeignKey("users.id"), primary_key=True),
+)
 
 class Task(Base, TimestampMixin):
     __tablename__ = 'tasks'
@@ -21,17 +34,8 @@ class Task(Base, TimestampMixin):
     due_date = Column(DateTime)
 
     group = relationship("Group", back_populates="tasks")
-    assignees = relationship("TaskAssignee", back_populates="task")
-    labels = relationship("TaskLabel", back_populates="task")
-
-
-class TaskAssignee(Base, TimestampMixin):
-    __tablename__ = 'task_assignees'
-    task_id = Column(String, ForeignKey('tasks.id'), primary_key=True, nullable=False)
-    user_id = Column(String, ForeignKey('users.id'), primary_key=True, nullable=False)
-
-    task = relationship("Task", back_populates="assignees")
-    user = relationship("User", back_populates="tasks_assigned")
+    assignees = relationship("User", secondary=task_assignee_association, back_populates="tasks_assigned")
+    labels = relationship("Label", secondary=task_label_association, back_populates="tasks")
 
 
 class Group(Base, TimestampMixin):
@@ -50,7 +54,7 @@ class User(Base, TimestampMixin):
     remind_channel_id = Column(String)
     periodic_remind_at = Column(String)
 
-    tasks_assigned = relationship("TaskAssignee", back_populates="user")
+    tasks_assigned = relationship("Task", secondary=task_assignee_association, back_populates="assignees")
 
 
 class Label(Base, TimestampMixin):
@@ -60,13 +64,5 @@ class Label(Base, TimestampMixin):
     group_id = Column(String, ForeignKey('groups.id'), nullable=False)
 
     group = relationship("Group", back_populates="labels")
-    tasks = relationship("TaskLabel", back_populates="label")
+    tasks = relationship("Task", secondary=task_label_association, back_populates="labels")
 
-
-class TaskLabel(Base, TimestampMixin):
-    __tablename__ = 'task_labels'
-    task_id = Column(String, ForeignKey('tasks.id'), primary_key=True, nullable=False)
-    label_id = Column(String, ForeignKey('labels.id'), primary_key=True, nullable=False)
-
-    task = relationship("Task", back_populates="labels")
-    label = relationship("Label", back_populates="tasks")
