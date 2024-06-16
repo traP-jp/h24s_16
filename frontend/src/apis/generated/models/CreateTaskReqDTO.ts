@@ -9,5 +9,6 @@ export type CreateTaskReqDTO = {
     due_date?: (string | null);
     group_id: string;
     assigned_user_ids: Array<string>;
+    label_ids: Array<string>;
 };
 

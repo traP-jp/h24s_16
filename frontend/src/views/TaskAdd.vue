@@ -9,6 +9,7 @@ import PrimaryButton from '@/components/PrimaryButton.vue'
 
 const user = ref<User>({
   id: '',
+  name: '',
   remind_channel_id: '',
   periodic_remind_at: '',
   created_at: '',
@@ -24,7 +25,7 @@ const newTask = ref<CreateTaskReqDTO>({
   content: '',
   due_date: '',
   group_id: '',
-  // labels: [],
+  label_ids: [],
   assigned_user_ids: []
 })
 
@@ -40,14 +41,14 @@ const createTask = () => {
     content: '',
     due_date: '',
     group_id: '',
-    // labels: [],
+    label_ids: [],
     assigned_user_ids: []
   }
 }
 </script>
 
 <template>
-  <PageHeader title="新規タスクの追加" :username="user.id" />
+  <PageHeader title="新規タスクの追加" :username="user.name" />
   <div>
     <PageContainer>
       <div class="field">

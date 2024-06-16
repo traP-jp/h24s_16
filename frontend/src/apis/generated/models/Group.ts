@@ -4,6 +4,7 @@
 /* eslint-disable */
 export type Group = {
     id: string;
+    name: string;
     remind_channel_id: (string | null);
     periodic_remind_at: (string | null);
     created_at: string;
