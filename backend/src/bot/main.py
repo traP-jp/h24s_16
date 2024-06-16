@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import json
 import os
 import re
 
@@ -36,6 +37,14 @@ async def on_reply(am: TraqMessage, payload: MessageCreatedPayload):
     text = payload.message.text
     text = re.sub(r"^!\\{[^}]*\\}", "", text).lstrip()
 
+    # 正規表現で !{.*} ` を 抽出し `{}` の中身をjson に変換
+    mens = re.search(r"!{([^}]*)}", text)
+    if mens is None:
+        return
+    mens_data = json.loads(mens.group(1))
+    if "type" not in mens_data or mens_data["type"] != "group":
+        return
+
     # 正規表現で https://q.trap.jp/messages/{message_id} を抽出
     message_text = re.search(r"https://q.trap.jp/messages/([0-9a-f-]+)", text)
     if message_text is None:
@@ -43,7 +52,7 @@ async def on_reply(am: TraqMessage, payload: MessageCreatedPayload):
         am.write("投稿を引用すると、タスクに追加できるよ！")
         return
     message_id = message_text.group(1)
-    am.write(f"この投稿をタスクに追加するよ！\n{リマインドしたい曜日を選択してね}！直近一週間以降やリマインドがいらない場合は :day7_darkday:を選択してね！ \nhttps://q.trap.jp/messages/{message_id}")
+    am.write(f"!{{{mens.group(1)}}}\nこの投稿をタスクに追加するよ！\n{リマインドしたい曜日を選択してね}！直近一週間以降やリマインドがいらない場合は :day7_darkday:を選択してね！ \nhttps://q.trap.jp/messages/{message_id}")
 
     now = datetime.datetime.now(tz=tz_jst_name)
     now_weekday = (now.weekday() + 1) % 7
@@ -59,6 +68,13 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
 
     res = await get_message.asyncio(message_id=message_id, client=client)
     if res is None or not isinstance(res, Message):
+        return
+
+    mens = re.search(r"!{([^}]*)}", res.content)
+    if mens is None:
+        return
+    mens_data = json.loads(mens.group(1))
+    if "type" not in mens_data or mens_data["type"] != "group":
         return
 
     task_message_text = re.search(r"https://q.trap.jp/messages/([0-9a-f-]+)", res.content)
@@ -98,11 +114,11 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
             )
             return
 
-        text = f"この投稿をタスクに追加するよ！\n{選択した曜日}: :{stamp_ids_rev[selected_day.stamp_id]}:\n{リマインドしたい時間を選択してね}！\nhttps://q.trap.jp/messages/{task_message_id}"
+        text = f"{mens['raw']}\nこの投稿をタスクに追加するよ！\n{選択した曜日}: :{stamp_ids_rev[selected_day.stamp_id]}:\n{リマインドしたい時間を選択してね}！\nhttps://q.trap.jp/messages/{task_message_id}"
         await edit_message.asyncio_detailed(
             message_id=message_id,
             client=client,
-            body=PostMessageRequest(content=text)
+            body=PostMessageRequest(content=text, embed=True)
         )
 
         for s in daystamps:
@@ -148,11 +164,11 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
                     client=client
                 )
 
-        text = f":loading: タスクを設定中だよ！\nhttps://q.trap.jp/messages/{task_message_id}"
+        text = f"{mens['raw']}\n:loading: タスクを設定中だよ！\nhttps://q.trap.jp/messages/{task_message_id}"
         await edit_message.asyncio_detailed(
             message_id=message_id,
             client=client,
-            body=PostMessageRequest(content=text)
+            body=PostMessageRequest(content=text, embed=True)
         )
 
         day_text = re.search(rf"{選択した曜日}: :([^:]+):", res.content)
@@ -181,16 +197,22 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
         )
 
         # todo
+        # db_crud_task = schemas.TaskCreate(title=new_task.title, content=new_task.content, message_id=new_task.message_id, due_date=new_task.due_date, group_id=new_task.group_id)
+        # db_crud_task = crud.create_task(db, db_crud_task)
+        # for db_user_id in new_task.assigned_user_ids:
+        #     if crud.read_user(db, db_user_id) is None:
+        #         crud.create_user(db, schemas.UserCreate(id=db_user_id))
+        # crud.create_task_assignee(db, db_crud_task, new_task.assigned_user_ids)
 
         await asyncio.sleep(1)
 
-        text = f"タスクが設定されたよ！\n{選択した曜日}: :{day_stamp}:\n選択した時間: :{stamp_ids_rev[selected_ampm.stamp_id]}::{stamp_ids_rev[selected_clock.stamp_id]}:\n"\
+        text = f"{mens['raw']}\nタスクが設定されたよ！\n{選択した曜日}: :{day_stamp}:\n選択した時間: :{stamp_ids_rev[selected_ampm.stamp_id]}::{stamp_ids_rev[selected_clock.stamp_id]}:\n"\
             f"リマインドする時間: {remind_time.strftime('%Y-%m-%d %H:%M:%S')}\n"\
             f"https://q.trap.jp/messages/{task_message_id}"
         await edit_message.asyncio_detailed(
             message_id=message_id,
             client=client,
-            body=PostMessageRequest(content=text)
+            body=PostMessageRequest(content=text, embed=True)
         )
 
 
