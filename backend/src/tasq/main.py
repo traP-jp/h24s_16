@@ -1,7 +1,7 @@
 import os
 from typing import Annotated
 
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import traqapi
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -49,6 +49,8 @@ traqapi_config.verify_ssl = False
 traqapi_client = traqapi.ApiClient(configuration=traqapi_config)
 traqUserApi = traqapi.UserApi(api_client=traqapi_client)
 traqGroupApi = traqapi.GroupApi(api_client=traqapi_client)
+
+jst = timezone(timedelta(hours=9))
 
 
 class GroupDetails(schemas.Group):
@@ -305,46 +307,44 @@ async def shutdown_process():
 
 @scheduler.scheduled_job("interval", minutes=1)
 async def remind_user():
-    now = datetime.now()
+    now = datetime.now(jst)
     db = next(get_db())
-    users_to_remind = db.query(models.User).filter(models.User.periodic_remind_at == f"{now.hour}:{now.minute}").all()
+    users_to_remind = db.query(models.User).filter(models.User.periodic_remind_at == now.strftime("%H:%m")).all()
+    print("Reminding user", now, users_to_remind)
     for user in users_to_remind:
-        tasks = db.query(models.Task).filter(models.Task.assignees.any(user))
-        remind_channel_id = user.remind_channel_id
-        name = user.name
+        tasks = db.query(models.Task).filter(models.Task.assignees.any(models.User.id == user.id))
         message = f"""@{user.name}
 |名前|期日|
 |----|----|
 """
         for task in tasks:
-            message += f"""|{task.title}|{task.strftime('%m月%d年 %H時%M分')}
+            message += f"""|{task.title}|{task.due_date.strftime('%m月%d年 %H時%M分')}
 """
         await post_message.asyncio_detailed(
-            channel_id=remind_channel_id,
+            channel_id=user.remind_channel_id,
             client=client,
-            body=PostMessageRequest(context=message, embed=True)
-)
+            body=PostMessageRequest(content=message, embed=True)
+        )
     db.close()
 
 @scheduler.scheduled_job("interval", minutes=1)
 async def remind_group():
-    now = datetime.now()
+    now = datetime.now(jst)
     db = next(get_db())
-    groups_to_remind = db.query(models.Group).filter(models.Group.periodic_remind_at == f"{now.hour}:{now.minute}").all()
+    groups_to_remind = db.query(models.Group).filter(models.Group.periodic_remind_at == now.strftime("%H:%m")).all()
     for group in groups_to_remind:
-        tasks = db.query(models.Group).filter(models.Group.periodic_remind_at == f"{now.hour}:{now.minute}").all()
-        remind_channel_id = user.remind_channel_id
-        name = user.name
-        message = f"""
+        tasks = db.query(models.Task).filter(models.Task.group.id == group.id).all()
+        remind_channel_id = group.remind_channel_id
+        message = f"""@{group.name}
 |名前|期日|
 |----|----|
 """
         for task in tasks:
-            message += f"""|{task.title}|{task.strftime('%m月%d年 %H時%M分')}
+            message += f"""|{task.title}|{task.due_date.strftime('%m月%d年 %H時%M分')}
 """
         await post_message.asyncio_detailed(
-            channel_id=remind_channel_id,
+            channel_id=group.remind_channel_id,
             client=client,
-            body=PostMessageRequest(context=message, embed=True)
+            body=PostMessageRequest(content=message, embed=True)
         )
     db.close()
