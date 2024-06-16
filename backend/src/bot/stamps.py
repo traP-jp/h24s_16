@@ -1,0 +1,83 @@
+from typing import Final
+
+stamp_ids: Final[dict] = {
+    "day0_sunday": "df26388c-30db-4f3c-a0e6-2593e051ccc2",
+    "day1_monday": "3b14cee8-35b4-4612-a769-c812db0cbbf1",
+    "day2_tuesday": "212c707c-e281-416a-a1ae-b39dbd1061fc",
+    "day3_wednesday": "17f9361c-78d4-4b3a-ae53-f402fbaefd06",
+    "day4_thursday": "1aad06ea-b556-4dce-97a4-3e4bc8ccb150",
+    "day5_friday": "84d09a53-2dec-4615-920c-7bad823fb1e1",
+    "day6_saturday": "cb238f8f-d5e3-4672-854b-473bbfef3c19",
+    "day7_darkday": "f801baa9-6d39-4715-bd91-bbe76a3108e0",
+    "AM": "3ef8f67d-65da-41bd-a269-863a94e7c3f3",
+    "PM": "2d790eeb-496a-41a5-af8f-19dfb4f4c328",
+    "clock6": "0907e724-4d67-4dcb-b772-281ee89315f9",
+    "clock2": "21c59f1f-a558-4a3b-ac6c-5b723c96f740",
+    "clock1030": "3962db1a-466e-4af2-9b1d-d12713b508d3",
+    "clock1230": "3d5f1c12-552c-4f73-9172-426a5bfdf38a",
+    "clock930": "4cc94a63-51ec-4407-9c5a-a9261fbfccfe",
+    "clock830": "5aa53024-81c2-4a4d-8c13-d2c45493288d",
+    "clock630": "6dca7c21-df50-4807-81ef-56fb5f026279",
+    "clock730": "735ef730-2fb6-4be2-9700-5092383c4fe6",
+    "clock8": "7a77f413-e0e5-4934-9ff9-3f10bde9a337",
+    "clock1": "8797ffd7-4211-46f4-8597-37ec90dfc82d",
+    "clock430": "8a65bdf7-39a2-4694-b107-f0fd9f75e79a",
+    "clock530": "94153939-4262-4d57-804d-2890ccc5557c",
+    "clock10": "9b033315-ab37-484f-81af-03979f846e9e",
+    "clock3": "9c643cb5-c27c-4108-a598-177555900c66",
+    "clock1130": "ab036467-a004-4299-b67f-fb3b5d9ac8c9",
+    "clock330": "c175f4fd-9a60-4633-be97-4317cae2641c",
+    "clock130": "c9e70fd6-ea6b-4076-bcbc-6a7c009b73cf",
+    "clock230": "d79d72b4-7428-4902-8d7c-faa7b777411d",
+    "clock4": "dbb114c0-5ae1-4ed0-ba3b-b8cc07146f84",
+    "clock9": "dd67bc0f-074f-40ca-8228-ef8f3b8bb47b",
+    "clock11": "e3a42317-a014-43a5-8be2-ac14e0a5ae15",
+    "clock12": "e8240371-95ef-4eed-a67e-4e1bfe77f119",
+    "clock7": "eae07ca9-437d-4b2e-abd9-7ab7a1ae8ddd",
+    "clock5": "eb42b842-59e8-4a5a-ae1b-898755447d1c",
+}
+
+stamp_ids_rev: Final[dict] = {v: k for k, v in stamp_ids.items()}
+
+daystamps: Final[list] = [
+    stamp_ids["day0_sunday"],
+    stamp_ids["day1_monday"],
+    stamp_ids["day2_tuesday"],
+    stamp_ids["day3_wednesday"],
+    stamp_ids["day4_thursday"],
+    stamp_ids["day5_friday"],
+    stamp_ids["day6_saturday"],
+    stamp_ids["day7_darkday"],
+]
+
+ampmstamps: Final[list] = [
+    stamp_ids["AM"],
+    stamp_ids["PM"],
+]
+
+clockstamps: Final[list] = [
+    stamp_ids["clock12"],
+    stamp_ids["clock1230"],
+    stamp_ids["clock1"],
+    stamp_ids["clock130"],
+    stamp_ids["clock2"],
+    stamp_ids["clock230"],
+    stamp_ids["clock3"],
+    stamp_ids["clock330"],
+    stamp_ids["clock4"],
+    stamp_ids["clock430"],
+    stamp_ids["clock5"],
+    stamp_ids["clock530"],
+    stamp_ids["clock6"],
+    stamp_ids["clock630"],
+    stamp_ids["clock7"],
+    stamp_ids["clock730"],
+    stamp_ids["clock8"],
+    stamp_ids["clock830"],
+    stamp_ids["clock9"],
+    stamp_ids["clock930"],
+    stamp_ids["clock10"],
+    stamp_ids["clock1030"],
+    stamp_ids["clock11"],
+    stamp_ids["clock1130"],
+]
