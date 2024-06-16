@@ -19,6 +19,10 @@ import tasq.repository.schemas as schemas
 from tasq.repository.database import get_db
 import tasq.repository.models as models
 
+import asyncio
+from aiotraq_bot import TraqHttpBot
+from aiotraq_message import TraqMessage, TraqMessageManager
+
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -247,3 +251,65 @@ def delete_label(label_id: str, username: Annotated[str, Depends(trao_scheme)], 
     if not db_read_label.group_id in traq_user.groups:
         raise HTTPException(status_code=404, detail="ユーザーがこのグループに所属していません")
     return crud.delete_label(db, label_id)
+
+@app.on_event("startup")
+def startup_process():
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(remind_user, "interval", second=60)
+    scheduler.add_job(remind_group, "interval", second=60)
+    scheduler.start()
+
+
+base_url = "https://q.trap.jp/api/v3"
+bot_verification_token = os.getenv("BOT_VERIFICATION_TOKEN", "")
+bot_access_token = os.getenv("BOT_ACCESS_TOKEN", "")
+
+bot = TraqHttpBot(verification_token=bot_verification_token)
+response = TraqMessageManager(bot, bot_access_token, base_url=base_url, base_client_url="https://q.trap.jp")
+
+async def component(am: TraqMessage, payload:str):
+    am.write(payload)
+
+async def send_message_user(message: str, user_id: str):
+    await response(component,user_id=user_id,payload=message)
+
+def remind_user():
+    now = datetime.now()
+    db = next(get_db())
+    users_to_remind = db.query(models.User).filter(models.User.periodic_remind_at == f"{now.hour}:{now.minute}").all()
+    for user in users_to_remind:
+        tasks = db.query(models.Task).filter(models.Task.assignees.any(user))
+        remind_channel_id = user.remind_channel_id
+        name = user.name
+        message = f"""@{user.name}
+|名前|期日|
+|----|----|
+"""
+        for task in tasks:
+            message += f"""|{task.title}|{task.strftime('%m月%d年 %H時%M分')}
+"""
+        # TODO: メッセージ送ってほしい
+        send_message_user(message=message, user_id=remind_channel_id)
+    db.close()
+
+async def send_message_group(message: str,group_id: str):
+    await response(component,group_id=group_id,payload=message)
+
+def remind_group():
+    now = datetime.now()
+    db = next(get_db())
+    groups_to_remind = db.query(models.Group).filter(models.Group.periodic_remind_at == f"{now.hour}:{now.minute}").all()
+    for group in groups_to_remind:
+        tasks = db.query(models.Group).filter(models.Group.periodic_remind_at == f"{now.hour}:{now.minute}").all()
+        remind_channel_id = group.remind_channel_id
+        name = group.name
+        message = f"""
+|名前|期日|
+|----|----|
+"""
+        for task in tasks:
+            message += f"""|{task.title}|{task.strftime('%m月%d年 %H時%M分')}
+"""
+        # TODO: メッセージ送ってほしい
+        send_message_group(message=message, group_id=remind_channel_id)
+    db.close()
