@@ -73,6 +73,7 @@ async def on_reply(am: TraqMessage, payload: MessageCreatedPayload):
     for i in range(7):
         s = daystamps[(now_weekday + i) % 7]
         am.stamp(s)
+        await asyncio.sleep(0.01)
     am.stamp(daystamps[7])
 
 
