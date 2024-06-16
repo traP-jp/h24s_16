@@ -22,9 +22,9 @@ const datePickerDisplay = ref(false)
 const newTask = ref<CreateTaskReqDTO>({
   title: 'string',
   content: 'string',
-  due_date: 'string',
+  due_date: '',
   group_id: 'string',
-  // labels: [],
+  labels: [],
   assigned_user_ids: []
 })
 
@@ -34,15 +34,16 @@ const openDatePicker = () => {
 
 const createTask = () => {
   apiClient.default.createTaskTasksPost(newTask.value).catch((v) => console.log(v))
-
+//値を追加？
   newTask.value = {
     title: '',
     content: '',
     due_date: '',
     group_id: '',
-    // labels: [],
+    labels: [],
     assigned_user_ids: []
   }
+
 }
 </script>
 
@@ -52,9 +53,11 @@ const createTask = () => {
     <PageContainer>
       <div class="field">
         <v-row class="justify-end">
-          <v-btn icon variant="flat">
+          <router-link :to="{ name: 'TaskList' }">
+           <v-btn icon variant="flat">
             <v-icon>mdi-close-circle-outline</v-icon>
           </v-btn>
+        </router-link>
         </v-row>
         <v-text-field v-model="newTask.title" label="タスク名" clearable />
         <v-text-field v-model="newTask.assigned_user_ids" label="アサイン先(@で指定)" clearable />
@@ -67,11 +70,13 @@ const createTask = () => {
           <v-date-picker v-if="datePickerDisplay === true"></v-date-picker>
         </v-text-field>
         <v-textarea rows="5" v-model="newTask.content" label="内容" clearable />
-        <v-combobox v-model="newTask.assigned_user_ids" chips multiple label="ラベル" clearable />
+        <v-combobox v-model="newTask.labels" chips multiple label="ラベル" clearable />
         <v-row class="justify-center">
+          <router-link :to="{ name: 'TaskList' }">
           <div @click="createTask">
             <PrimaryButton text="作成" />
           </div>
+          </router-link>
         </v-row>
       </div>
     </PageContainer>
