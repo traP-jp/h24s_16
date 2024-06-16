@@ -3,6 +3,7 @@ import datetime
 import json
 import os
 import re
+import uuid
 
 from aiotraq import AuthenticatedClient
 from aiotraq.api.message import (
@@ -22,7 +23,7 @@ from aiotraq_bot.models.event import (
 from aiotraq_message import TraqMessage, TraqMessageManager
 from src.bot.stamps import ampmstamps, clockstamps, daystamps, stamp_ids, stamp_ids_rev
 from src.bot.util import remove_bot_stamps
-from src.tasq.repository import schemas
+from src.tasq.repository import models, schemas
 from src.tasq.repository.crud import create_task
 from src.tasq.repository.database import SessionLocal
 
@@ -120,7 +121,12 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
             )
 
             # todo
-            await asyncio.sleep(1)
+            title = res.content[:10]
+            task = models.Task(id=str(uuid.uuid4()), title=title, content=res.content, due_date=None, group_id=mens_data["id"], labels=[], assignees=[])
+            db.add(task)
+            db.commit()
+            db.refresh(task)
+            await asyncio.sleep(0.1)
 
             text = f"タスクが設定されたよ！\nhttps://q.trap.jp/messages/{task_message_id}"
             await edit_message.asyncio_detailed(
@@ -220,11 +226,10 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
             return
 
         title = res.content[:10]
-        print(res.content)
-        db_crud_task = schemas.TaskCreate(title=title, content=res.content, message_id=task_message_id, due_date=remind_time, group_id=mens_data["id"])
-        print(db_crud_task)
-        task = create_task(db, db_crud_task)
-        print(task)
+        task = models.Task(id=str(uuid.uuid4()), title=title, content=res.content, due_date=remind_time, group_id=mens_data["id"], labels=[], assignees=[])
+        db.add(task)
+        db.commit()
+        db.refresh(task)
 
         await asyncio.sleep(0.1)
 
