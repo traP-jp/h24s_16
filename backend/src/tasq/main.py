@@ -102,6 +102,8 @@ def get_group_tasks(group_id: str, username: Annotated[str, Depends(trao_scheme)
 @app.post("/tasks")
 def create_task(new_task: CreateTaskReqDTO, username: Annotated[str, Depends(trao_scheme)], db: Session = Depends(get_db)) -> TaskDetails:
     traq_user = get_traq_user_from_name(username)
+    if not new_task.group_id in traq_user.groups:
+        raise HTTPException(status_code=404, detail="ユーザーがこのグループに所属していません")
     db_crud_task = schemas.TaskCreate(title=new_task.title, content=new_task.content, message_id=new_task.message_id, due_date=new_task.due_date, group_id=new_task.group_id)
     db_crud_task = crud.create_task(db, db_crud_task)
     for db_user_id in new_task.assigned_user_ids:
@@ -114,6 +116,11 @@ def create_task(new_task: CreateTaskReqDTO, username: Annotated[str, Depends(tra
 @app.patch("/tasks/{task_id}")
 def edit_task(task_id: str, new_task: UpdateTaskReqDTO, username: Annotated[str, Depends(trao_scheme)], db: Session = Depends(get_db)) -> TaskDetails:
     traq_user = get_traq_user_from_name(username)
+    if not new_task.group_id in traq_user.groups:
+        raise HTTPException(status_code=404, detail="ユーザーがこのグループに所属していません")
+    db_read_task = crud.read_task(db, task_id)
+    if db_read_task is None:
+        raise HTTPException(status_code=404, detail="このラベルが存在しません")
     db_update_task = crud.update_task(db, task_id, schemas.TaskCreate(new_task.title, new_task.content, new_task.message_id, new_task.due_date, new_task.group_id))
 #    db_task_assignee = db.query(models.TaskAssignee).filter(models.TaskAssignee.task_id == task_id).first()
     crud.update_task_assigee(db, db_update_task, new_task.assigned_user_ids)
@@ -123,6 +130,12 @@ def edit_task(task_id: str, new_task: UpdateTaskReqDTO, username: Annotated[str,
 
 @app.delete("/tasks/{task_id}")
 def delete_task(task_id: str, username: Annotated[str, Depends(trao_scheme)], db: Session = Depends(get_db)):
+    traq_user = get_traq_user_from_name(username)
+    db_read_task = crud.read_task(db, task_id)
+    if db_read_task is None:
+        raise HTTPException(status_code=404, detail="このラベルが存在しません")
+    if not db_read_task.group_id in traq_user.groups:
+        raise HTTPException(status_code=404, detail="ユーザーがこのグループに所属していません")
     return crud.delete_task(db, task_id)
 
 
