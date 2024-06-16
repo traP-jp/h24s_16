@@ -14,7 +14,10 @@ from sqlalchemy.orm import Session
 from pydantic.aliases import AliasPath
 from pydantic import Field
 from apscheduler.schedulers.background import BackgroundScheduler
-import uuid
+from aiotraq.models.post_message_request import PostMessageRequest
+from aiotraq.models.post_message_stamp_request import PostMessageStampRequest
+from aiotraq import AuthenticatedClient
+from aiotraq.api.message import (post_message)
 
 import tasq.repository.crud as crud
 import tasq.repository.schemas as schemas
@@ -29,6 +32,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+base_url = "https://q.trap.jp/api/v3"
+bot_verification_token = os.getenv("BOT_VERIFICATION_TOKEN", "")
+bot_access_token = os.getenv("BOT_ACCESS_TOKEN", "")
+
+client = AuthenticatedClient(base_url=base_url, token=bot_access_token)
+
 
 trao_scheme = APIKeyHeader(name="X-Forwarded-User", scheme_name="traO")
 
@@ -288,7 +298,7 @@ def startup_process():
     scheduler.add_job(remind_group, "interval", minutes=1)
     scheduler.start()
 
-def remind_user():
+async def remind_user():
     now = datetime.now()
     db = next(get_db())
     users_to_remind = db.query(models.User).filter(models.User.periodic_remind_at == f"{now.hour}:{now.minute}").all()
@@ -303,7 +313,11 @@ def remind_user():
         for task in tasks:
             message += f"""|{task.title}|{task.strftime('%m月%d年 %H時%M分')}
 """
-        # TODO: メッセージ送ってほしい
+        await post_message.asyncio_detailed(
+            channel_id=remind_channel_id,
+            client=client,
+            body=PostMessageRequest(context=message, embed=True)
+)
     db.close()
 
 def remind_group():
@@ -321,5 +335,9 @@ def remind_group():
         for task in tasks:
             message += f"""|{task.title}|{task.strftime('%m月%d年 %H時%M分')}
 """
-        # TODO: メッセージ送ってほしい
+        await post_message.asyncio_detailed(
+            channel_id=remind_channel_id,
+            client=client,
+            body=PostMessageRequest(context=message, embed=True)
+        )
     db.close()
