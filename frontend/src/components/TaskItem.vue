@@ -42,8 +42,8 @@ defineProps<Props>()
   border: none;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
   border-radius: 10px; /* 枠を丸くする */
-  padding: 10px;
-  margin: 15px 30px;
+  padding: 16px;
+  margin: 16px 0px;
   background-color: white; /* 背景色を変更する */
   /* width: calc(100% - 230px);  */
 }
@@ -62,7 +62,7 @@ defineProps<Props>()
 }
 
 .detail-button {
-  padding: 8px 16px; /* ボタンの内側の余白 */
+  padding: 4px 4px; /* ボタンの内側の余白 */
   color: $color-primary; /* ボタンのテキスト色 */
   border: none; /* ボーダーを削除 */
   cursor: pointer; /* ホバー時にカーソルをポインターにする */
@@ -74,7 +74,7 @@ defineProps<Props>()
 }
 
 .close-button {
-  padding: 8px 16px; /* ボタンの内側の余白 */
+  padding: 4px 4px; /* ボタンの内側の余白 */
   color: $color-primary; /* ボタンのテキスト色 */
   border: none; /* ボーダーを削除 */
   cursor: pointer; /* ホバー時にカーソルをポインターにする */
