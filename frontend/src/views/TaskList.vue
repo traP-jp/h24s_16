@@ -18,6 +18,14 @@ apiClient.default
       return 0
     })
   )
+  .then(() =>
+    userGroups.value.map((group) =>
+      apiClient.default
+        .getGroupTasksGroupsGroupIdTasksGet(group.id)
+        .then((res) => res.map((task) => tasks.value.push(task)))
+        .then(() => (displayTasks.value = tasks.value))
+    )
+  )
 
 const user = ref<User>({
   id: '',
@@ -41,20 +49,13 @@ const userGroups = ref<Group[]>([
 
 const selectedGroup = ref<{ name: string; id: string }>({ name: '自分のタスク全体', id: '' })
 
-const tasks = ref<TaskDetails[]>([
-  {
-    title: 'タイトル',
-    content: '内容',
-    message_id: '',
-    due_date: '6月15日',
-    id: '',
-    group_id: '',
-    created_at: '',
-    updated_at: '',
-    labels: [],
-    assigned_users: []
-  }
-])
+const tasks = ref<TaskDetails[]>([])
+const displayTasks = ref<TaskDetails[]>([])
+
+const changeGroups = (group: Group) => {
+  selectedGroup.value = { name: group.name, id: group.id }
+  displayTasks.value = tasks.value.filter((task) => task.group_id === group.id)
+}
 </script>
 
 <template>
@@ -76,7 +77,7 @@ const tasks = ref<TaskDetails[]>([
           <button
             class="groups"
             :class="{ active: selectedGroup.id === group.id }"
-            @click="selectedGroup = { name: group.name, id: group.id }"
+            @click="changeGroups(group)"
           >
             {{ group.name }}
           </button>
