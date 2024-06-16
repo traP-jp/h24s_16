@@ -26,6 +26,22 @@ const userGroups = ref<GroupDetails[]>([
     created_at: 'string',
     updated_at: 'string',
     user_ids: ['Pugma', 'ayana']
+  },
+  {
+    id: 'なろう講習会',
+    remind_channel_id: 'わあ',
+    periodic_remind_at: 'うあああ',
+    created_at: 'string',
+    updated_at: 'string',
+    user_ids: ['Pugma', 'ayana']
+  },
+  {
+    id: 'web基礎講習会',
+    remind_channel_id: 'わあー',
+    periodic_remind_at: 'うああー',
+    created_at: 'string',
+    updated_at: 'string',
+    user_ids: ['Pugma', 'ayana']
   }
 ])
 
@@ -53,10 +69,10 @@ const tasks = ref<TaskDetails[]>([
     <div class="sidebar">
       <ul>
         <li class="topLevel">
-          <button @click="selectedGroup = '自分のタスク全体'">自分のタスク全体</button>
+          <button class = "groups"  :class="{ active: selectedGroup === '自分のタスク全体' }" @click="selectedGroup = '自分のタスク全体'">自分のタスク全体</button>
         </li>
         <li v-for="group in userGroups" :key="group.id">
-          <button @click="selectedGroup = group.id">{{ group.id }}</button>
+          <button class = "groups" :class="{ active: selectedGroup === group.id }" @click="selectedGroup = group.id">{{ group.id }}</button>
         </li>
       </ul>
     </div>
@@ -95,7 +111,14 @@ const tasks = ref<TaskDetails[]>([
   }
   .topLevel {
     border-bottom: 2px solid #dddddd;
+    padding-bottom: 20px;
   }
+  .groups:hover{
+   color: #555555;
+  }  
+  .groups.active {
+  color: #6AA2B4; /* ここで希望の色を指定します */
+}
 }
 
 .task-title {
