@@ -2,12 +2,11 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type GroupDetails = {
+export type Group = {
     id: string;
     remind_channel_id: (string | null);
     periodic_remind_at: (string | null);
     created_at: string;
     updated_at: string;
-    user_ids: Array<string>;
 };
 

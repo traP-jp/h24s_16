@@ -4,7 +4,7 @@ import { ref } from 'vue'
 import PageHeader from '@/components/PageHeader.vue'
 import PageContainer from '@/components/PageContainer.vue'
 import apiClient from '@/apis'
-import type { User, TaskDetails } from '@/apis/generated'
+import type { User, CreateTaskReqDTO } from '@/apis/generated'
 import PrimaryButton from '@/components/PrimaryButton.vue'
 
 const user = ref<User>({
@@ -18,21 +18,13 @@ const user = ref<User>({
 apiClient.default.getUserUsersMeGet().then((res) => (user.value = res))
 
 const datePickerDisplay = ref(false)
-const taskName = ref('')
-const assignee = ref('')
-const deadline = ref('')
-const content = ref('')
-const tags = ref<string[]>([])
-const tasks = ref<TaskDetails[]>([])
 
-const newTask = ref<TaskDetails>({
+const newTask = ref<CreateTaskReqDTO>({
   title: 'string',
   content: 'string',
   due_date: 'string',
-  id: 'string',
   group_id: 'string',
-  created_at: 'string',
-  updated_at: 'string',
+  // labels: [],
   assigned_user_ids: []
 })
 
@@ -47,10 +39,8 @@ const createTask = () => {
     title: '',
     content: '',
     due_date: '',
-    id: '',
     group_id: '',
-    created_at: '',
-    updated_at: '',
+    // labels: [],
     assigned_user_ids: []
   }
 }
@@ -66,7 +56,7 @@ const createTask = () => {
             <v-icon>mdi-close-circle-outline</v-icon>
           </v-btn>
         </v-row>
-        <v-text-field v-model="newTask.id" label="タスク名" clearable />
+        <v-text-field v-model="newTask.title" label="タスク名" clearable />
         <v-text-field v-model="newTask.assigned_user_ids" label="アサイン先(@で指定)" clearable />
         <v-text-field v-model="newTask.due_date" label="期日" readonly clearable>
           <template v-slot:prepend>
@@ -77,7 +67,7 @@ const createTask = () => {
           <v-date-picker v-if="datePickerDisplay === true"></v-date-picker>
         </v-text-field>
         <v-textarea rows="5" v-model="newTask.content" label="内容" clearable />
-        <v-combobox v-model="newTask.group_id" chips multiple label="タグ" clearable />
+        <v-combobox v-model="newTask.assigned_user_ids" chips multiple label="ラベル" clearable />
         <v-row class="justify-center">
           <div @click="createTask">
             <PrimaryButton text="作成" />
