@@ -12,6 +12,7 @@ apiClient.default.getUserGroupsUsersGroupsGet().then((res) => (userGroups.value 
 
 const user = ref<User>({
   id: '',
+  name: '',
   remind_channel_id: '',
   periodic_remind_at: '',
   created_at: '',
@@ -21,6 +22,7 @@ const user = ref<User>({
 const userGroups = ref<Group[]>([
   {
     id: 'Hackathon 24 spring 16',
+    name: '',
     remind_channel_id: 'ぐおおおおお',
     periodic_remind_at: 'ああああああああ',
     created_at: 'string',
@@ -47,7 +49,7 @@ const tasks = ref<TaskDetails[]>([
 </script>
 
 <template>
-  <PageHeader title="タスク一覧" :username="user.id" />
+  <PageHeader title="タスク一覧" :username="user.name" />
   <div class="pageContents">
     <!-- サイドバー -->
     <div class="sidebar">
@@ -67,7 +69,7 @@ const tasks = ref<TaskDetails[]>([
             :class="{ active: selectedGroup === group.id }"
             @click="selectedGroup = group.id"
           >
-            {{ group.id }}
+            {{ group.name }}
           </button>
         </li>
       </ul>

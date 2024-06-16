@@ -4,8 +4,9 @@
 /* eslint-disable */
 export type User = {
     id: string;
-    remind_channel_id: (string | null);
-    periodic_remind_at: (string | null);
+    name: string;
+    remind_channel_id?: (string | null);
+    periodic_remind_at?: (string | null);
     created_at: string;
     updated_at: string;
 };
