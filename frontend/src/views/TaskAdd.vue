@@ -4,7 +4,7 @@ import { ref } from 'vue'
 import PageHeader from '@/components/PageHeader.vue'
 import PageContainer from '@/components/PageContainer.vue'
 import apiClient from '@/apis'
-import type { User, CreateTaskReqDTO } from '@/apis/generated'
+import type { User, CreateTaskReqDTO, Group } from '@/apis/generated'
 import PrimaryButton from '@/components/PrimaryButton.vue'
 import router from '@/router'
 
@@ -16,8 +16,10 @@ const user = ref<User>({
   created_at: '',
   updated_at: ''
 })
+const userGroups = ref<Group[]>([])
 
 apiClient.default.getUserUsersMeGet().then((res) => (user.value = res))
+apiClient.default.getUserGroupsUsersGroupsGet().then((res) => (userGroups.value = res))
 
 const datePickerDisplay = ref(false)
 
@@ -67,7 +69,9 @@ const createTask = () => {
         <v-combobox v-model="newTask.assigned_user_ids" chips multiple label="ラベル" clearable />
         <v-row class="justify-end">
           <div @click="createTask">
-            <button class="secondary-button" @click="router.push({ name: 'TaskList' })">もとのページに戻る</button>
+            <button class="secondary-button" @click="router.push({ name: 'TaskList' })">
+              もとのページに戻る
+            </button>
             <PrimaryButton text="作成" />
           </div>
         </v-row>
