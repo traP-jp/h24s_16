@@ -1,3 +1,4 @@
+import os
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
@@ -10,6 +11,12 @@ from tasq.repository.models import Base
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+
+if os.getenv("PYTHON_ENV") == "production":
+    DATABASE_URL = os.environ["DB_URL"]
+else:
+    DATABASE_URL = "sqlite:///./test.db"
+config.sec_section_option(section, "DB_URL", DATABASE_URL)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
