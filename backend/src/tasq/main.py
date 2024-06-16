@@ -142,7 +142,8 @@ def create_task(new_task: CreateTaskReqDTO, username: Annotated[str, Depends(tra
     for db_user_id in new_task.assigned_user_ids:
         get_or_create_user(db, db_user_id)
     crud.create_task_assignee(db, db_crud_task, new_task.assigned_user_ids)
-    return TaskDetails(assigned_user_ids=new_task.assigned_user_ids, title=db_crud_task.title, content=db_crud_task.content, message_id=db_crud_task.message_id, due_date=db_crud_task.due_date, group_id=db_crud_task.group_id, id=db_crud_task.id, created_at=db_crud_task.created_at, updated_at=db_crud_task.updated_at)
+    db_task = crud.read_task(db, db_crud_task.id)
+    return TaskDetails.model_validate(db_task)
 
 
 @app.delete("/tasks/{task_id}")
