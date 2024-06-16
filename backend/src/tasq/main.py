@@ -33,6 +33,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+scheduler = AsyncIOScheduler()
+
 base_url = "https://q.trap.jp/api/v3"
 bot_verification_token = os.getenv("BOT_VERIFICATION_TOKEN", "")
 bot_access_token = os.getenv("BOT_ACCESS_TOKEN", "")
@@ -291,13 +293,17 @@ def delete_label(label_id: str, username: Annotated[str, Depends(trao_scheme)], 
         raise HTTPException(status_code=404, detail="ユーザーがこのグループに所属していません")
     return crud.delete_label(db, label_id)
 
+
+
 @app.on_event("startup")
-def startup_process():
-    scheduler = AsyncIOScheduler()
-    scheduler.add_job(remind_user, "interval", minutes=1)
-    scheduler.add_job(remind_group, "interval", minutes=1)
+async def startup_process():
     scheduler.start()
 
+@app.on_event("shutdown")
+async def shutdown_process():
+    scheduler.shutdown()
+
+@scheduler.scheduled_job("interval", minutes=1)
 async def remind_user():
     now = datetime.now()
     db = next(get_db())
@@ -320,6 +326,7 @@ async def remind_user():
 )
     db.close()
 
+@scheduler.scheduled_job("interval", minutes=1)
 async def remind_group():
     now = datetime.now()
     db = next(get_db())
