@@ -265,3 +265,46 @@ def delete_label(label_id: str, username: Annotated[str, Depends(trao_scheme)], 
     if not db_read_label.group_id in traq_user.groups:
         raise HTTPException(status_code=404, detail="ユーザーがこのグループに所属していません")
     return crud.delete_label(db, label_id)
+
+@app.on_event("startup")
+def startup_process():
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(remind_user, "interval", second=60)
+    scheduler.add_job(remind_group, "interval", second=60)
+    scheduler.start()
+
+def remind_user():
+    now = datetime.now()
+    db = next(get_db())
+    users_to_remind = db.query(models.User).filter(models.User.periodic_remind_at == f"{now.hour}:{now.minute}").all()
+    for user in users_to_remind:
+        tasks = db.query(models.Task).filter(models.Task.assignees.any(user))
+        remind_channel_id = user.remind_channel_id
+        name = user.name
+        message = f"""@{user.name}
+|名前|期日|
+|----|----|
+"""
+        for task in tasks:
+            message += f"""|{task.title}|{task.strftime('%m月%d年 %H時%M分')}
+"""
+        # TODO: メッセージ送ってほしい
+    db.close()
+
+def remind_group():
+    now = datetime.now()
+    db = next(get_db())
+    groups_to_remind = db.query(models.Group).filter(models.Group.periodic_remind_at == f"{now.hour}:{now.minute}").all()
+    for group in groups_to_remind:
+        tasks = db.query(models.Group).filter(models.Group.periodic_remind_at == f"{now.hour}:{now.minute}").all()
+        remind_channel_id = user.remind_channel_id
+        name = user.name
+        message = f"""
+|名前|期日|
+|----|----|
+"""
+        for task in tasks:
+            message += f"""|{task.title}|{task.strftime('%m月%d年 %H時%M分')}
+"""
+        # TODO: メッセージ送ってほしい
+    db.close()
