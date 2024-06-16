@@ -35,13 +35,15 @@ tz_jst_name = datetime.timezone(datetime.timedelta(hours=9), name='JST')
 async def on_reply(am: TraqMessage, payload: MessageCreatedPayload):
     # 正規表現で先頭の `!{.*} ` を削除
     text = payload.message.text
-    text = re.sub(r"^!\\{[^}]*\\}", "", text).lstrip()
+    text = re.sub(r"^!{[^}]*}", "", text).lstrip()
 
     # 正規表現で !{.*} ` を 抽出し `{}` の中身をjson に変換
     mens = re.search(r"!({[^}]*})", text)
+    print(mens)
     if mens is None:
         return
     mens_data = json.loads(mens.group(1))
+    print(mens_data)
     if "type" not in mens_data or mens_data["type"] != "group":
         return
 
