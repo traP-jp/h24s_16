@@ -1,3 +1,4 @@
+import os
 from typing import Annotated
 
 from datetime import datetime
@@ -25,7 +26,7 @@ app.add_middleware(
 
 trao_scheme = APIKeyHeader(name="X-Forwarded-User", scheme_name="traO")
 
-traqapi_config = traqapi.Configuration(access_token="LnlK5MtZ0ebySrTm0EKtHsApBlsyg2rP8cOh")
+traqapi_config = traqapi.Configuration(access_token=os.getenv("BOT_ACCESS_TOKEN"))
 traqapi_config.verify_ssl = False
 traqapi_client = traqapi.ApiClient(configuration=traqapi_config)
 traqUserApi = traqapi.UserApi(api_client=traqapi_client)
