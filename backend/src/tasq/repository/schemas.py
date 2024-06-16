@@ -45,8 +45,8 @@ class Label(LabelBase):
 
 class UserBase(BaseModel):
     id: str
-    remind_channel_id: str | None
-    periodic_remind_at: str | None
+    remind_channel_id: str | None = None
+    periodic_remind_at: str | None = None
 
 class UserCreate(UserBase):
     pass
@@ -81,7 +81,7 @@ class Group(GroupBase):
 
 class TaskAssigneeBase(BaseModel):
     task_id: str
-    user_id: str
+    user_id: list[str]
 
 class TaskAssigneeCreate(TaskAssigneeBase):
     pass

@@ -1,10 +1,11 @@
+from sqlalchemy import insert
 from sqlalchemy.orm import Session
 import tasq.repository.models as models
 import tasq.repository.schemas as schemas
-
+import uuid
 
 def create_task(db: Session, task: schemas.TaskCreate):
-    db_task = models.Task(**task.model_dump())
+    db_task = models.Task(**task.model_dump(), id=str(uuid.uuid4()))
     db.add(db_task)
     db.commit()
     db.refresh(db_task)
@@ -12,6 +13,10 @@ def create_task(db: Session, task: schemas.TaskCreate):
 
 def read_task(db: Session, task_id: str):
     db_task = db.query(models.Task).filter(models.Task.id == task_id).first()
+    return db_task
+
+def read_task_by_groupid(db: Session, groupid: str):
+    db_task = db.query(models.Task).filter(models.Task.group_id == groupid).all()
     return db_task
 
 def update_task(db: Session, task_id: str, task: schemas.TaskUpdate):
@@ -31,7 +36,7 @@ def delete_task(db: Session, task_id: str):
     return db_task
 
 def create_label(db: Session, label: schemas.LabelCreate):
-    db_label = models.Label(**label.model_dump())
+    db_label = models.Label(**label.model_dump(), id=str(uuid.uuid4()))
     db.add(db_label)
     db.commit()
     db.refresh(db_label)
@@ -97,38 +102,63 @@ def update_group(db: Session, group_id: str, group: schemas.GroupUpdate):
         db.refresh(db_group)
     return db_group
 
-def create_task_assignee(db: Session, task: schemas.Task, user: schemas.User):
-    db_task_assignee = models.TaskAssignee(task_id=task.id, user_id=user.id)
-    db.add(db_task_assignee)
+def create_task_assignee(db: Session, task: schemas.Task, users: list[str]):
+#    db_task_assignee = models.task_assignee_association(task_id=task.id, user_id=users)
+    db_task_assignee = [{
+        "task_id": task.id,
+        "user_id": user_id} for user_id in users
+    ]
+    stmt = insert(models.task_assignee_association)
+    db.execute(stmt, db_task_assignee)
     db.commit()
-    db.refresh(db_task_assignee)
+ #   db.add(db_task_assignee)
+#    db.commit()
+#    db.refresh(db_task_assignee)
     return db_task_assignee
 
 def read_task_assignee_from_task(db: Session, task_id: str):
-    db_task_assignee = db.query(models.Task).filter(models.Task.id == task_id).first()
+    db_task_assignee = db.query(models.task_assignee_association).filter(models.task_assignee_association.task_id == task_id).all()
+    # TODO ?
     return db_task_assignee
 
 def read_task_assignee_from_user(db: Session, user_id: str):
-    db_task_assignee = db.query(models.User).filter(models.User.id == user_id).all()
+    db_task_assignee = db.query(models.task_assignee_association).filter(user_id in models.task_assignee_association.user_id).all()
+    return db_task_assignee
+
+def update_task_assigee(db: Session, task: schemas.Task, users: list[str]):
+    db_task_assignee = db.query(models.task_assignee_association).filter(models.task_assignee_association.task_id == task.id).first()
+    # TODO update for list of users
+    if db_task_assignee:
+        db_task_assignee.user_id = users
+        db.commit()
+        db.refresh(db_task_assignee)
     return db_task_assignee
 
 def create_task_label(db: Session, task: schemas.Task, labels: list[str]):
-    db_task_label = models.TaskLabel(task_id=task.id, label_id=labels)
-    db.add(db_task_label)
+    #db_task_label = models.TaskLabel(task_id=task.id, label_id=labels)
+    db_task_label = [{
+        "task_id": task.id,
+        "label_id": label_id} for label_id in labels
+    ]
+    stmt = insert(models.task_label_association)
+    db.execute(stmt, db_task_label)
     db.commit()
-    db.refresh(db_task_label)
+    #db.add(db_task_label)
+    #db.commit()
+    #db.refresh(db_task_label)
     return db_task_label
 
 def read_task_label_from_task(db: Session, task_id: str):
-    db_task_label = db.query(models.TaskLabel).filter(models.TaskLabel.task_id == task_id).first()
+    db_task_label = db.query(models.task_label_association).filter(models.task_label_association.task_id == task_id).first()
     return db_task_label
 
 def read_task_label_from_label(db: Session, label_id: str):
-    db_task_label = db.query(models.TaskLabel).filter(label_id in models.TaskLabel.label_id).all()
+    db_task_label = db.query(models.task_label_association).filter(label_id in models.task_label_association.label_id).all()
     return db_task_label
 
 def update_task_label(db: Session, task: schemas.Task, labels: list[str]):
-    db_task_label = db.query(models.TaskLabel).filter(models.TaskLabel.task_id == task.id).first()
+    db_task_label = db.query(models.task_label_association).filter(models.task_label_association.task_id == task.id).first()
+    # TODO update for list of users
     if db_task_label:
         db_task_label.label_id = labels
         db.commit()
@@ -137,6 +167,7 @@ def update_task_label(db: Session, task: schemas.Task, labels: list[str]):
 
 def delete_task_label(db: Session, task: schemas.Task, labels: list[str]):
     db_task_label = db.query(models.TaskLabel).filter(models.TaskLabel.task_id == task.id).first()
+    # TODO: delete for list of users.
     if db_task_label:
         db.delete(db_task_label)
         db.commit()
