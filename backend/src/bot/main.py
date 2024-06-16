@@ -38,7 +38,7 @@ async def on_reply(am: TraqMessage, payload: MessageCreatedPayload):
     text = re.sub(r"^!\\{[^}]*\\}", "", text).lstrip()
 
     # 正規表現で !{.*} ` を 抽出し `{}` の中身をjson に変換
-    mens = re.search(r"!{([^}]*)}", text)
+    mens = re.search(r"!({[^}]*})", text)
     if mens is None:
         return
     mens_data = json.loads(mens.group(1))
@@ -52,7 +52,7 @@ async def on_reply(am: TraqMessage, payload: MessageCreatedPayload):
         am.write("投稿を引用すると、タスクに追加できるよ！")
         return
     message_id = message_text.group(1)
-    am.write(f"!{{{mens.group(1)}}}\nこの投稿をタスクに追加するよ！\n{リマインドしたい曜日を選択してね}！直近一週間以降やリマインドがいらない場合は :day7_darkday:を選択してね！ \nhttps://q.trap.jp/messages/{message_id}")
+    am.write(f"!{mens.group(1)}\nこの投稿をタスクに追加するよ！\n{リマインドしたい曜日を選択してね}！直近一週間以降やリマインドがいらない場合は :day7_darkday:を選択してね！ \nhttps://q.trap.jp/messages/{message_id}")
 
     now = datetime.datetime.now(tz=tz_jst_name)
     now_weekday = (now.weekday() + 1) % 7
@@ -70,7 +70,7 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
     if res is None or not isinstance(res, Message):
         return
 
-    mens = re.search(r"!{([^}]*)}", res.content)
+    mens = re.search(r"!({[^}]*})", res.content)
     if mens is None:
         return
     mens_data = json.loads(mens.group(1))
