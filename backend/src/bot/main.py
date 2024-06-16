@@ -5,21 +5,32 @@ import os
 import re
 
 from aiotraq import AuthenticatedClient
-from aiotraq.api.message import (add_message_stamp, edit_message, get_message,
-                                 remove_message_stamp)
+from aiotraq.api.message import (
+    add_message_stamp,
+    edit_message,
+    get_message,
+    remove_message_stamp,
+)
 from aiotraq.models.message import Message
 from aiotraq.models.post_message_request import PostMessageRequest
 from aiotraq.models.post_message_stamp_request import PostMessageStampRequest
 from aiotraq_bot import TraqHttpBot
-from aiotraq_bot.models.event import (BotMessageStampsUpdatedPayload,
-                                      MessageCreatedPayload)
+from aiotraq_bot.models.event import (
+    BotMessageStampsUpdatedPayload,
+    MessageCreatedPayload,
+)
 from aiotraq_message import TraqMessage, TraqMessageManager
 from src.bot.stamps import ampmstamps, clockstamps, daystamps, stamp_ids, stamp_ids_rev
 from src.bot.util import remove_bot_stamps
+from src.tasq.repository import schemas
+from src.tasq.repository.crud import create_task
+from src.tasq.repository.database import SessionLocal
 
 base_url = "https://q.trap.jp/api/v3"
 bot_verification_token = os.getenv("BOT_VERIFICATION_TOKEN", "")
 bot_access_token = os.getenv("BOT_ACCESS_TOKEN", "")
+
+db = SessionLocal()
 
 bot = TraqHttpBot(verification_token=bot_verification_token)
 response = TraqMessageManager(bot, bot_access_token, base_url=base_url, base_client_url="https://q.trap.jp")
@@ -200,15 +211,15 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
             tzinfo=tz_jst_name
         )
 
-        # todo
-        # db_crud_task = schemas.TaskCreate(title=new_task.title, content=new_task.content, message_id=new_task.message_id, due_date=new_task.due_date, group_id=new_task.group_id)
-        # db_crud_task = crud.create_task(db, db_crud_task)
-        # for db_user_id in new_task.assigned_user_ids:
-        #     if crud.read_user(db, db_user_id) is None:
-        #         crud.create_user(db, schemas.UserCreate(id=db_user_id))
-        # crud.create_task_assignee(db, db_crud_task, new_task.assigned_user_ids)
+        res = await get_message.asyncio(message_id=task_message_id, client=client)
+        if res is None or not isinstance(res, Message):
+            return
 
-        await asyncio.sleep(1)
+        title = res.content[:10]
+        db_crud_task = schemas.TaskCreate(title=title, content=res.content, message_id=task_message_id, due_date=remind_time, group_id=mens_data["id"])
+        db_crud_task = create_task(db, db_crud_task)
+
+        await asyncio.sleep(0.1)
 
         text = f"!{mens_raw}\nタスクが設定されたよ！\n{選択した曜日}: :{day_stamp}:\n選択した時間: :{stamp_ids_rev[selected_ampm.stamp_id]}::{stamp_ids_rev[selected_clock.stamp_id]}:\n"\
             f"リマインドする時間: {remind_time.strftime('%Y-%m-%d %H:%M:%S')}\n"\
