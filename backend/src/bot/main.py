@@ -24,7 +24,7 @@ from aiotraq_message import TraqMessage, TraqMessageManager
 from src.bot.stamps import ampmstamps, clockstamps, daystamps, stamp_ids, stamp_ids_rev
 from src.bot.util import remove_bot_stamps
 from src.tasq.repository import models, schemas
-from src.tasq.repository.crud import create_task
+from src.tasq.repository.crud import create_group, read_group
 from src.tasq.repository.database import SessionLocal
 
 base_url = "https://q.trap.jp/api/v3"
@@ -120,7 +120,9 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
                 body=PostMessageRequest(content=text)
             )
 
-            # todo
+            group = read_group(db, mens_data["id"])
+            if group is None:
+                create_group(db, schemas.GroupCreate(id=mens_data["id"], name=mens_data["raw"].lstrip("@"), remind_channel_id=None, periodic_remind_at=None))
             title = res.content[:10]
             task = models.Task(id=str(uuid.uuid4()), title=title, content=res.content, due_date=None, group_id=mens_data["id"], labels=[], assignees=[])
             db.add(task)
@@ -224,6 +226,10 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
         res = await get_message.asyncio(message_id=task_message_id, client=client)
         if res is None or not isinstance(res, Message):
             return
+
+        group = read_group(db, mens_data["id"])
+        if group is None:
+            create_group(db, schemas.GroupCreate(id=mens_data["id"], name=mens_data["raw"].lstrip("@"), remind_channel_id=None, periodic_remind_at=None))
 
         title = res.content[:10]
         task = models.Task(id=str(uuid.uuid4()), title=title, content=res.content, due_date=remind_time, group_id=mens_data["id"], labels=[], assignees=[])
