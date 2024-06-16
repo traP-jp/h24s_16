@@ -305,12 +305,11 @@ async def startup_process():
 async def shutdown_process():
     scheduler.shutdown()
 
-@scheduler.scheduled_job("interval", minutes=1)
+@scheduler.scheduled_job("cron", year="*", month="*", day="*", week="*", day_of_week="*", hour="*", minute="*", second=0, timezone="Asia/Tokyo")
 async def remind_user():
-    now = datetime.now(jst)
+    now = datetime.now(jst).strftime("%H:%M")
     db = next(get_db())
-    users_to_remind = db.query(models.User).filter(models.User.periodic_remind_at == now.strftime("%H:%m")).all()
-    print("Reminding user", now, users_to_remind)
+    users_to_remind = db.query(models.User).filter(models.User.periodic_remind_at == now).all()
     for user in users_to_remind:
         tasks = db.query(models.Task).filter(models.Task.assignees.any(models.User.id == user.id))
         message = f"""@{user.name}
@@ -327,11 +326,11 @@ async def remind_user():
         )
     db.close()
 
-@scheduler.scheduled_job("interval", minutes=1)
+@scheduler.scheduled_job("cron", year="*", month="*", day="*", week="*", day_of_week="*", hour="*", minute="*", second=0, timezone="Asia/Tokyo")
 async def remind_group():
-    now = datetime.now(jst)
+    now = datetime.now(jst).strftime("%H:%M")
     db = next(get_db())
-    groups_to_remind = db.query(models.Group).filter(models.Group.periodic_remind_at == now.strftime("%H:%m")).all()
+    groups_to_remind = db.query(models.Group).filter(models.Group.periodic_remind_at == now).all()
     for group in groups_to_remind:
         tasks = db.query(models.Task).filter(models.Task.group.id == group.id).all()
         remind_channel_id = group.remind_channel_id
