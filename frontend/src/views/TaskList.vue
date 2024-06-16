@@ -28,33 +28,11 @@ const user = ref<User>({
   updated_at: ''
 })
 
-const userGroups = ref<Group[]>([
-  {
-    id: 'Hackathon 24 spring 16',
-    name: '',
-    remind_channel_id: 'ぐおおおおお',
-    periodic_remind_at: 'ああああああああ',
-    created_at: 'string',
-    updated_at: 'string'
-  }
-])
+const userGroups = ref<Group[]>([])
 
 const selectedGroup = ref<{ name: string; id: string }>({ name: '自分のタスク全体', id: '' })
 
-const tasks = ref<TaskDetails[]>([
-  {
-    title: 'タイトル',
-    content: '内容',
-    message_id: '',
-    due_date: '6月15日',
-    id: '',
-    group_id: '',
-    created_at: '',
-    updated_at: '',
-    labels: [],
-    assigned_users: []
-  }
-])
+const tasks = ref<TaskDetails[]>([])
 </script>
 
 <template>
