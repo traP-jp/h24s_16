@@ -56,6 +56,9 @@ defineProps<Props>()
   display: flex;
   justify-content: space-between; /* 左右にコンテンツを分散 */
   align-items: center; /* 中央揃え */
+  *{
+    padding: 8px 0;
+  }
 }
 
 .detail-button {
@@ -63,7 +66,7 @@ defineProps<Props>()
   color: $color-primary; /* ボタンのテキスト色 */
   border: none; /* ボーダーを削除 */
   cursor: pointer; /* ホバー時にカーソルをポインターにする */
-  margin-bottom: 3px; /* ボタンと詳細情報の間の余白 */
+  // margin-bottom: 3px; /* ボタンと詳細情報の間の余白 */
 }
 
 .detail-button:hover {
@@ -75,7 +78,7 @@ defineProps<Props>()
   color: $color-primary; /* ボタンのテキスト色 */
   border: none; /* ボーダーを削除 */
   cursor: pointer; /* ホバー時にカーソルをポインターにする */
-  margin-bottom: 3px; /* ボタンと詳細情報の間の余白 */
+  // margin-bottom: 3px; /* ボタンと詳細情報の間の余白 */
 }
 
 .close-button:hover {
