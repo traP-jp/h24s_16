@@ -26,7 +26,15 @@ defineProps<Props>()
     <!-- 詳細情報を条件付きで表示 -->
     <div v-if="openDetail" class="additional-details">
       <!-- 隠されていた詳細情報 -->
-      {{ task.content }}
+      <div>
+        {{ task.content }}
+      </div>
+      <div>
+        <span v-for="label in task.labels" :key="label.id">{{ label.name }}</span>
+      </div>
+      <div>
+        <span v-for="assignee in task.assigned_users" :key="assignee.id">{{ assignee.name }}</span>
+      </div>
     </div>
 
     <div v-if="openDetail" class="additional-details">
@@ -56,7 +64,7 @@ defineProps<Props>()
   display: flex;
   justify-content: space-between; /* 左右にコンテンツを分散 */
   align-items: center; /* 中央揃え */
-  *{
+  * {
     padding: 8px 0;
   }
 }
@@ -87,5 +95,10 @@ defineProps<Props>()
 
 .button-right {
   text-align: right;
+}
+.additional-details {
+  span {
+    margin: 0 4px;
+  }
 }
 </style>
