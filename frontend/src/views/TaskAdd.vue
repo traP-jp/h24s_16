@@ -20,10 +20,10 @@ apiClient.default.getUserUsersMeGet().then((res) => (user.value = res))
 const datePickerDisplay = ref(false)
 
 const newTask = ref<CreateTaskReqDTO>({
-  title: 'string',
-  content: 'string',
-  due_date: 'string',
-  group_id: 'string',
+  title: '',
+  content: '',
+  due_date: '',
+  group_id: '',
   // labels: [],
   assigned_user_ids: []
 })
@@ -51,11 +51,11 @@ const createTask = () => {
   <div>
     <PageContainer>
       <div class="field">
-        <v-row class="justify-end">
-          <v-btn icon variant="flat">
-            <v-icon>mdi-close-circle-outline</v-icon>
+        <v-col cols="12" class="d-flex justify-end">
+          <v-btn icon variant="outlined" density="compact">
+            <v-icon>mdi-close</v-icon>
           </v-btn>
-        </v-row>
+        </v-col>
         <v-text-field v-model="newTask.title" label="タスク名" clearable />
         <v-text-field v-model="newTask.assigned_user_ids" label="アサイン先(@で指定)" clearable />
         <v-text-field v-model="newTask.due_date" label="期日" readonly clearable>
