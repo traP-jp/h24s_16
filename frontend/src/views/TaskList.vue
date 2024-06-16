@@ -59,12 +59,16 @@ const tasks = ref<TaskDetails[]>([
           <button @click="selectedGroup = group.id">{{ group.id }}</button>
         </li>
       </ul>
-      <router-link :to="{ name: 'TaskAdd' }">
-        <PrimaryButton text="新規タスクを追加" />
-      </router-link>
     </div>
     <PageContainer>
-      <h2>{{ selectedGroup }}</h2>
+      <div style="display: flex">
+        <h2>{{ selectedGroup }}</h2>
+        <button>自分のタスク</button>
+        <button>タグ</button>
+        <router-link :to="{ name: 'TaskAdd' }">
+          <PrimaryButton text="新規タスクを追加" />
+        </router-link>
+      </div>
       <!-- タスク一覧表示 -->
       <ul>
         <li v-for="task in tasks" :key="task.id">
@@ -89,7 +93,7 @@ const tasks = ref<TaskDetails[]>([
     font-size: 1.05rem;
     font-weight: 700;
   }
-  .topLevel{
+  .topLevel {
     border-bottom: 2px solid #dddddd;
   }
 }
@@ -103,6 +107,9 @@ const tasks = ref<TaskDetails[]>([
   height: calc(100% - 5rem);
   display: grid;
   grid-template-columns: 1fr 5fr;
+  h2{
+    flex-grow: 1;
+  }
   li {
   list-style-type: none; /* 中黒を消す */
   }
