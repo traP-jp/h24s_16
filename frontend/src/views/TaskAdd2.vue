@@ -49,11 +49,16 @@ const createTask = () => {
     <v-app>
       <v-main>
         <v-layout>
-          <v-card width="80em" variant="outlined" class="mx-auto">
+          <v-card width="80em" variant="elevated" class="mx-auto">
             <v-container>
-              <v-text-field v-mode="taskName" label="タスク名" clearable></v-text-field>
-              <v-text-field v-model="assignee" label="アサイン先(@で指定)" clearable></v-text-field>
-              <v-text-field v-mode="deadline" label="期日" readonly clearable>
+              <v-row class="justify-end">
+                <v-btn icon @click="">
+                  <v-icon>mdi-close</v-icon>
+                </v-btn>
+              </v-row>
+              <v-text-field v-model="taskName" variant="outlined" label="タスク名" clearable></v-text-field>
+              <v-text-field v-model="assignee" variant="outlined" label="アサイン先(@で指定)" clearable></v-text-field>
+              <v-text-field v-model="deadline" variant="outlined" label="期日" readonly clearable>
                 <template v-slot:prepend>
                   <v-btn icon @click="openDatePicker">
                     <v-icon>mdi-calendar</v-icon>
@@ -61,8 +66,8 @@ const createTask = () => {
                 </template>
                 <v-date-picker v-if="datePickerDisplay === true"></v-date-picker>
               </v-text-field>
-              <v-text-field v-mode="content" label="内容" clearable></v-text-field>
-              <v-text-field v-model="tags" label="タグ"></v-text-field>
+              <v-textarea rows="5" v-model="content" label="内容"  clearable></v-textarea>
+              <v-combobox v-model="tags" chips multiple variant="outlined" label="タグ" clearable></v-combobox>
               <v-row class="justify-center">
                 <v-btn color="primary" variant="flat" @click="createTask"> 作成 </v-btn>
               </v-row>

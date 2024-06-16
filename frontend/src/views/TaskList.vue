@@ -5,7 +5,7 @@ import PageContainer from '@/components/PageContainer.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import TaskItem from '@/components/TaskItem.vue'
 import apiClient from '@/apis'
-import type { User, GroupDetails, TaskDetails } from '@/apis/generated'
+import type { User, TaskDetails, Group } from '@/apis/generated'
 
 apiClient.default.getUserUsersMeGet().then((res) => (user.value = res))
 apiClient.default.getUserGroupsUsersGroupsGet().then((res) => (userGroups.value = res))
@@ -18,30 +18,13 @@ const user = ref<User>({
   updated_at: ''
 })
 
-const userGroups = ref<GroupDetails[]>([
+const userGroups = ref<Group[]>([
   {
     id: 'Hackathon 24 spring 16',
     remind_channel_id: 'ぐおおおおお',
     periodic_remind_at: 'ああああああああ',
     created_at: 'string',
-    updated_at: 'string',
-    user_ids: ['Pugma', 'ayana']
-  },
-  {
-    id: 'なろう講習会',
-    remind_channel_id: 'わあ',
-    periodic_remind_at: 'うあああ',
-    created_at: 'string',
-    updated_at: 'string',
-    user_ids: ['Pugma', 'ayana']
-  },
-  {
-    id: 'web基礎講習会',
-    remind_channel_id: 'わあー',
-    periodic_remind_at: 'うああー',
-    created_at: 'string',
-    updated_at: 'string',
-    user_ids: ['Pugma', 'ayana']
+    updated_at: 'string'
   }
 ])
 
@@ -57,7 +40,8 @@ const tasks = ref<TaskDetails[]>([
     group_id: '',
     created_at: '',
     updated_at: '',
-    assigned_user_ids: ['ayana']
+    labels: [],
+    assigned_users: []
   }
 ])
 </script>

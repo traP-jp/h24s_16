@@ -6,6 +6,10 @@ import traqapi
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
+import tasq.repository.schemas as schemas
+import tasq.repository.crud as crud
+import tasq.repository.models as models
+from tasq.repository.database import get_db
 from sqlalchemy.orm import Session
 from pydantic.aliases import AliasPath
 from pydantic import Field
@@ -81,7 +85,6 @@ def get_user(username: Annotated[str, Depends(trao_scheme)], db: Session = Depen
         ))
     return user
 
-
 @app.get("/users/groups")
 def get_user_groups(username: Annotated[str, Depends(trao_scheme)], db: Session = Depends(get_db)) -> list[schemas.Group]:
     traq_user = get_traq_user_from_name(username)
@@ -121,12 +124,28 @@ def get_group_tasks(group_id: str, username: Annotated[str, Depends(trao_scheme)
 
 @app.post("/tasks")
 def create_task(new_task: CreateTaskReqDTO, username: Annotated[str, Depends(trao_scheme)], db: Session = Depends(get_db)) -> TaskDetails:
-    pass
+    traq_user = get_traq_user_from_name(username)
+    if not new_task.group_id in traq_user.groups:
+        raise HTTPException(status_code=404, detail="ユーザーがこのグループに所属していません")
+    db_crud_task = schemas.TaskCreate(title=new_task.title, content=new_task.content, message_id=new_task.message_id, due_date=new_task.due_date, group_id=new_task.group_id)
+    db_crud_task = crud.create_task(db, db_crud_task)
+    for db_user_id in new_task.assigned_user_ids:
+        if crud.read_user(db, db_user_id) is None:
+            crud.create_user(db, schemas.UserCreate(id=db_user_id))
+    crud.create_task_assignee(db, db_crud_task, new_task.assigned_user_ids)
+    return TaskDetails(assigned_user_ids=new_task.assigned_user_ids, title=db_crud_task.title, content=db_crud_task.content, message_id=db_crud_task.message_id, due_date=db_crud_task.due_date, group_id=db_crud_task.group_id, id=db_crud_task.id, created_at=db_crud_task.created_at, updated_at=db_crud_task.updated_at)
 
 
 @app.delete("/tasks/{task_id}")
 def delete_task(task_id: str, username: Annotated[str, Depends(trao_scheme)], db: Session = Depends(get_db)):
-    pass
+    traq_user = get_traq_user_from_name(username)
+    db_read_task = crud.read_task(db, task_id)
+    if db_read_task is None:
+        raise HTTPException(status_code=404, detail="このラベルが存在しません")
+    if not db_read_task.group_id in traq_user.groups:
+        raise HTTPException(status_code=404, detail="ユーザーがこのグループに所属していません")
+    return crud.delete_task(db, task_id)
+
 
 @app.patch("/tasks/{task_id}/title")
 def patch_task_title(task_id: str, title: str, username: Annotated[str, Depends(trao_scheme)], db: Session = Depends(get_db)):
@@ -201,14 +220,30 @@ def put_task_assignee(task_id: str, label_ids: list[str], username: Annotated[st
 
 @app.post("/labels")
 def create_label(new_label: schemas.LabelCreate, username: Annotated[str, Depends(trao_scheme)], db: Session = Depends(get_db)) -> schemas.Label:
-    pass
+    traq_user = get_traq_user_from_name(username)
+    if new_label.group_id in traq_user.groups:
+        return crud.create_label(db, new_label)
+    else:
+        raise HTTPException(status_code=404, detail="ユーザーがこのグループに所属していません")
 
 
 @app.patch("/labels/{label_id}")
 def edit_label(label_id: str, new_label: schemas.LabelUpdate, username: Annotated[str, Depends(trao_scheme)], db: Session = Depends(get_db)) -> schemas.Label:
-    pass
+    traq_user = get_traq_user_from_name(username)
+    db_read_label = crud.read_label(db, label_id)
+    if db_read_label is None:
+        raise HTTPException(status_code=404, detail="このラベルが存在しません")
+    if not db_read_label.group_id in traq_user.groups:
+        raise HTTPException(status_code=404, detail="ユーザーがこのグループに所属していません")
+    return crud.update_label(db, label_id, new_label)
 
 
 @app.delete("/labels/{label_id}")
 def delete_label(label_id: str, username: Annotated[str, Depends(trao_scheme)], db: Session = Depends(get_db)):
-    pass
+    traq_user = get_traq_user_from_name(username)
+    db_read_label = crud.read_label(db, label_id)
+    if db_read_label is None:
+        raise HTTPException(status_code=404, detail="このラベルが存在しません")
+    if not db_read_label.group_id in traq_user.groups:
+        raise HTTPException(status_code=404, detail="ユーザーがこのグループに所属していません")
+    return crud.delete_label(db, label_id)

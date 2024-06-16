@@ -5,8 +5,8 @@
 export type CreateTaskReqDTO = {
     title: string;
     content: string;
-    message_id?: string;
-    due_date?: string;
+    message_id?: (string | null);
+    due_date?: (string | null);
     group_id: string;
     assigned_user_ids: Array<string>;
 };

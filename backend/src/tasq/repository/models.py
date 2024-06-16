@@ -65,4 +65,3 @@ class Label(Base, TimestampMixin):
 
     group = relationship("Group", back_populates="labels")
     tasks = relationship("Task", secondary=task_label_association, back_populates="labels")
-
