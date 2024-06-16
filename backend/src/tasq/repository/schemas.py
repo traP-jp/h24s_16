@@ -45,6 +45,7 @@ class Label(LabelBase):
 
 class UserBase(BaseModel):
     id: str
+    name: str
     remind_channel_id: str | None = None
     periodic_remind_at: str | None = None
 
@@ -63,6 +64,7 @@ class User(UserBase):
 
 class GroupBase(BaseModel):
     id: str
+    name: str
     remind_channel_id: str | None
     periodic_remind_at: str | None
 

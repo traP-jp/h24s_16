@@ -41,6 +41,7 @@ class Task(Base, TimestampMixin):
 class Group(Base, TimestampMixin):
     __tablename__ = 'groups'
     id = Column(String(256), primary_key=True, nullable=False)
+    name = Column(String(256), nullable=False)
     remind_channel_id = Column(String(256))
     periodic_remind_at = Column(String(256))
 
@@ -51,6 +52,7 @@ class Group(Base, TimestampMixin):
 class User(Base, TimestampMixin):
     __tablename__ = 'users'
     id = Column(String(256), primary_key=True, nullable=False)
+    name = Column(String(256), nullable=False)
     remind_channel_id = Column(String(256))
     periodic_remind_at = Column(String(256))
 

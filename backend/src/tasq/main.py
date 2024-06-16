@@ -48,6 +48,7 @@ class TaskDetails(schemas.Task):
 
 class CreateTaskReqDTO(schemas.TaskCreate):
     assigned_user_ids: list[str]
+    label_ids: list[str]
 
 
 class UpdateTaskReqDTO(schemas.TaskUpdate):
@@ -68,7 +69,7 @@ def get_or_create_user(db: Session, user_id: str):
         traq_user = traqUserApi.get_user(user_id)
         if not traq_user:
             raise HTTPException(status_code=404, detail="ユーザーが存在しません")
-        db_user = crud.create_user(db, models.UserCreate(id=user_id, remind_channel_id=None, periodic_remind_at=None))
+        db_user = crud.create_user(db, models.UserCreate(id=user_id, name=traq_user.name, remind_channel_id=None, periodic_remind_at=None))
         db.add(db_user)
     return db_user
 
@@ -80,6 +81,7 @@ def get_user(username: Annotated[str, Depends(trao_scheme)], db: Session = Depen
     if not user:
         return crud.create_user(db, schemas.UserCreate(
             id=traq_user.id,
+            name=traq_user.name,
             remind_channel_id=None,
             periodic_remind_at=None
         ))
@@ -92,8 +94,11 @@ def get_user_groups(username: Annotated[str, Depends(trao_scheme)], db: Session 
     groups = []
     for group_id in traq_user.groups:
         group = crud.read_group(db, group_id)
+        traq_group = traqGroupApi.get_user_group(group_id)
+        if not traq_group:
+            raise HTTPException(status_code=404, detail="グループが存在しません")
         if not group:
-            groups.append(crud.create_group(db, schemas.GroupCreate(id=group_id, remind_channel_id=None, periodic_remind_at=None)))
+            groups.append(crud.create_group(db, schemas.GroupCreate(id=group_id, name=traq_group.name, remind_channel_id=None, periodic_remind_at=None)))
         else:
             groups.append(group)
     return groups
@@ -106,6 +111,9 @@ def get_group(group_id: str, username: Annotated[str, Depends(trao_scheme)], db:
     group = crud.read_group(db, group_id)
     traq_group = traqGroupApi.get_user_group(group_id=group_id)
     if not group:
+        traq_group = traqGroupApi.get_user_group(group_id)
+        if not traq_group:
+            raise HTTPException(status_code=404, detail="グループが存在しません")
         group = crud.create_group(db, schemas.GroupCreate(id=group_id, remind_channel_id = None, periodic_remind_at = None))
     return GroupDetails(user_ids=map(lambda x: x.id, traq_group.members), **group.__dict__)
 
@@ -127,7 +135,15 @@ def create_task(new_task: CreateTaskReqDTO, username: Annotated[str, Depends(tra
     traq_user = get_traq_user_from_name(username)
     if not new_task.group_id in traq_user.groups:
         raise HTTPException(status_code=404, detail="ユーザーがこのグループに所属していません")
-    db_crud_task = schemas.TaskCreate(title=new_task.title, content=new_task.content, message_id=new_task.message_id, due_date=new_task.due_date, group_id=new_task.group_id)
+    labels = []
+    for label_id in label_ids:
+        db_label = crud.read_label(db, label_id)
+        if not db_label:
+            raise HTTPException(status_code=404, detail="ラベルが存在しません")
+        if db_label.group.id != new_task.group_id:
+            raise HTTPException(status=400, detail="ラベルが該当グループに属していません")
+        labels.append(db_label)
+    db_crud_task = schemas.TaskCreate(title=new_task.title, content=new_task.content, message_id=new_task.message_id, due_date=new_task.due_date, group_id=new_task.group_id, labels=labels)
     db_crud_task = crud.create_task(db, db_crud_task)
     for db_user_id in new_task.assigned_user_ids:
         if crud.read_user(db, db_user_id) is None:
@@ -213,6 +229,8 @@ def put_task_assignee(task_id: str, label_ids: list[str], username: Annotated[st
         db_label = crud.read_label(db, label_id)
         if not db_label:
             raise HTTPException(status_code=404, detail="ラベルが存在しません")
+        if db_label.group.id != task.group.id:
+            raise HTTPException(status_code=400, detail="ラベルは該当グループに属していません")
         task.labels.append(db_label)
     db.commit()
     db.refresh(task)
