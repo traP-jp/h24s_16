@@ -13,7 +13,7 @@ from tasq.repository.database import get_db
 from sqlalchemy.orm import Session
 from pydantic.aliases import AliasPath
 from pydantic import Field
-from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.asyncio import AsyncIOScheduler 
 from aiotraq.models.post_message_request import PostMessageRequest
 from aiotraq.models.post_message_stamp_request import PostMessageStampRequest
 from aiotraq import AuthenticatedClient
@@ -293,7 +293,7 @@ def delete_label(label_id: str, username: Annotated[str, Depends(trao_scheme)], 
 
 @app.on_event("startup")
 def startup_process():
-    scheduler = BackgroundScheduler()
+    scheduler = AsyncIOScheduler()
     scheduler.add_job(remind_user, "interval", minutes=1)
     scheduler.add_job(remind_group, "interval", minutes=1)
     scheduler.start()
