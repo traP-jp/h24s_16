@@ -144,6 +144,8 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
                     client=client
                 )
 
+        await asyncio.sleep(0.1)
+
         for s in ampmstamps + clockstamps:
             await add_message_stamp.asyncio_detailed(
                 message_id=message_id,
@@ -151,6 +153,7 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
                 client=client,
                 body=PostMessageStampRequest(count=1)
             )
+            await asyncio.sleep(0.01)
 
     elif リマインドしたい時間を選択してね in res.content:
         # stampsの中で clockstamps に含まれていてかつ一番 createdAt が新しいものを取得
@@ -216,8 +219,11 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
             return
 
         title = res.content[:10]
+        print(res.content)
         db_crud_task = schemas.TaskCreate(title=title, content=res.content, message_id=task_message_id, due_date=remind_time, group_id=mens_data["id"])
-        db_crud_task = create_task(db, db_crud_task)
+        print(db_crud_task)
+        task = create_task(db, db_crud_task)
+        print(task)
 
         await asyncio.sleep(0.1)
 
