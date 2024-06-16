@@ -130,7 +130,7 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
             db.refresh(task)
             await asyncio.sleep(0.1)
 
-            text = f"タスクが設定されたよ！\nhttps://q.trap.jp/messages/{task_message_id}"
+            text = f"タスクが設定されたよ！\n\nhttps://tasq.trap.show\nhttps://q.trap.jp/messages/{task_message_id}"
             await edit_message.asyncio_detailed(
                 message_id=message_id,
                 client=client,
@@ -240,7 +240,8 @@ async def on_stamps_updated(payload: BotMessageStampsUpdatedPayload) -> None:
         await asyncio.sleep(0.1)
 
         text = f"!{mens_raw}\nタスクが設定されたよ！\n{選択した曜日}: :{day_stamp}:\n選択した時間: :{stamp_ids_rev[selected_ampm.stamp_id]}::{stamp_ids_rev[selected_clock.stamp_id]}:\n"\
-            f"リマインドする時間: {remind_time.strftime('%Y-%m-%d %H:%M:%S')}\n"\
+            f"リマインドする時間: {remind_time.strftime('%Y-%m-%d %H:%M:%S')}\n\n"\
+            "https://tasq.trap.show"\
             f"https://q.trap.jp/messages/{task_message_id}"
         await edit_message.asyncio_detailed(
             message_id=message_id,
