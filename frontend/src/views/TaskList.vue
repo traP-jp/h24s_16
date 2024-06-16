@@ -8,7 +8,16 @@ import apiClient from '@/apis'
 import type { User, TaskDetails, Group } from '@/apis/generated'
 
 apiClient.default.getUserUsersMeGet().then((res) => (user.value = res))
-apiClient.default.getUserGroupsUsersGroupsGet().then((res) => (userGroups.value = res))
+apiClient.default
+  .getUserGroupsUsersGroupsGet()
+  .then((res) => (userGroups.value = res))
+  .then(() =>
+    userGroups.value.sort(function (a, b) {
+      if (a.name < b.name) return -1
+      if (a.name > b.name) return 1
+      return 0
+    })
+  )
 
 const user = ref<User>({
   id: '',
