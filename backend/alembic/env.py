@@ -13,7 +13,7 @@ from tasq.repository.models import Base
 config = context.config
 
 if os.getenv("PYTHON_ENV") == "production":
-    DATABASE_URL = os.environ["DB_URL"]
+    DATABASE_URL = os.environ["ALEMBIC_DB_URL"]
 else:
     DATABASE_URL = "sqlite:///./test.db"
 config.set_main_option("sqlalchemy.url", DATABASE_URL)
