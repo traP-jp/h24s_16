@@ -36,16 +36,7 @@ const user = ref<User>({
   updated_at: ''
 })
 
-const userGroups = ref<Group[]>([
-  {
-    id: 'Hackathon 24 spring 16',
-    name: '',
-    remind_channel_id: 'ぐおおおおお',
-    periodic_remind_at: 'ああああああああ',
-    created_at: 'string',
-    updated_at: 'string'
-  }
-])
+const userGroups = ref<Group[]>([])
 
 const selectedGroup = ref<{ name: string; id: string }>({ name: '自分のタスク全体', id: '' })
 
