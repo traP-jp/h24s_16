@@ -13,7 +13,7 @@ COPY requirements.lock ./
 RUN PYTHONDONTWRITEBYTECODE=1 pip install --no-cache-dir -r requirements.lock
 
 ENV PYTHON_ENV production
-ENV PYTHON_PATH=.
+ENV PYTHONPATH=.
 
 COPY src alembic.ini .
 COPY alembic ./alembic
