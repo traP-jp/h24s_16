@@ -13,6 +13,7 @@ from tasq.repository.database import get_db
 from sqlalchemy.orm import Session
 from pydantic.aliases import AliasPath
 from pydantic import Field
+from apscheduler.schedulers.background import BackgroundScheduler
 
 import tasq.repository.crud as crud
 import tasq.repository.schemas as schemas
