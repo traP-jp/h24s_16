@@ -6,7 +6,7 @@ class TaskBase(BaseModel):
     title: str
     content: str
     message_id: str | None = None
-    due_date: str | None = None
+    due_date: datetime | None = None
 
 
 class TaskCreate(TaskBase):
@@ -42,8 +42,8 @@ class Label(LabelBase):
 
 class UserBase(BaseModel):
     id: str
-    remind_channel_id: str | None
-    periodic_remind_at: str | None
+    remind_channel_id: str | None = None
+    periodic_remind_at: str | None = None
 
 class UserCreate(UserBase):
     pass
@@ -72,7 +72,7 @@ class Group(GroupBase):
 
 class TaskAssigneeBase(BaseModel):
     task_id: str
-    user_id: list[str]
+    user_id: tuple[str]
 
 class TaskAssigneeCreate(TaskAssigneeBase):
     pass

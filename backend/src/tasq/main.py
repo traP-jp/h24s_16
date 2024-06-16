@@ -25,7 +25,7 @@ app.add_middleware(
 
 trao_scheme = APIKeyHeader(name="X-Forwarded-User", scheme_name="traO")
 
-traqapi_config = traqapi.Configuration(access_token="")
+traqapi_config = traqapi.Configuration(access_token="LJw4tHsRdSQftIQeeWqqH74ripN1jp2TieA9")
 traqapi_config.verify_ssl = False
 traqapi_client = traqapi.ApiClient(configuration=traqapi_config)
 traqUserApi = traqapi.UserApi(api_client=traqapi_client)
@@ -89,7 +89,6 @@ def get_group(group_id: str, username: Annotated[str, Depends(trao_scheme)], db:
     if not group:
         group = crud.create_group(db, schemas.GroupCreate(id=group_id, remind_channel_id=None, periodic_remind_at=None))
     return GroupDetails(user_ids=map(lambda x: x.id, traq_group.members), **group)
-    pass
 
 
 @app.get("/groups/{group_id}/tasks")
@@ -101,13 +100,13 @@ def get_group_tasks(group_id: str, username: Annotated[str, Depends(trao_scheme)
 @app.post("/tasks")
 def create_task(new_task: CreateTaskReqDTO, username: Annotated[str, Depends(trao_scheme)], db: Session = Depends(get_db)) -> TaskDetails:
     traq_user = get_traq_user_from_name(username)
-    db_crud_task = schemas.TaskCreate(new_task.title, new_task.content, new_task.message_id, new_task.due_date, new_task.group_id)
+    db_crud_task = schemas.TaskCreate(title=new_task.title, content=new_task.content, message_id=new_task.message_id, due_date=new_task.due_date, group_id=new_task.group_id)
     db_crud_task = crud.create_task(db, db_crud_task)
     for db_user_id in new_task.assigned_user_ids:
         if crud.read_user(db, db_user_id) is None:
-            crud.create_user(db, schemas.UserCreate(db_user_id))
+            crud.create_user(db, schemas.UserCreate(id=db_user_id))
     crud.create_task_assignee(db, db_crud_task, new_task.assigned_user_ids)
-    return TaskDetails(assigned_user_ids=new_task.assigned_user_ids, **db_crud_task)
+    return TaskDetails(assigned_user_ids=new_task.assigned_user_ids, title=db_crud_task.title, content=db_crud_task.content, message_id=db_crud_task.message_id, due_date=db_crud_task.due_date, group_id=db_crud_task.group_id, id=db_crud_task.id, created_at=db_crud_task.created_at, updated_at=db_crud_task.updated_at)
 
 
 @app.patch("/tasks/{task_id}")
