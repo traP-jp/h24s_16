@@ -320,7 +320,7 @@ async def remind_user():
 )
     db.close()
 
-def remind_group():
+async def remind_group():
     now = datetime.now()
     db = next(get_db())
     groups_to_remind = db.query(models.Group).filter(models.Group.periodic_remind_at == f"{now.hour}:{now.minute}").all()
