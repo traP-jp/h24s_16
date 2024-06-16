@@ -50,12 +50,20 @@ const userGroups = ref<Group[]>([
 const selectedGroup = ref<{ name: string; id: string }>({ name: '自分のタスク全体', id: '' })
 
 const tasks = ref<TaskDetails[]>([])
+const groupTasks = ref<TaskDetails[]>([])
 const displayTasks = ref<TaskDetails[]>([])
 
 const changeGroups = (group: Group) => {
   selectedGroup.value = { name: group.name, id: group.id }
-  displayTasks.value = tasks.value.filter((task) => task.group_id === group.id)
+  groupTasks.value = tasks.value.filter((task) => task.group_id === group.id)
+  displayTasks.value = groupTasks.value
+  onlyMe.value = false
 }
+const changeAssignee = () => {
+  onlyMe.value = !onlyMe.value
+  displayTasks.value = groupTasks.value.filter((task) => task.assigned_users.includes(user.value))
+}
+const onlyMe = ref<boolean>(false)
 </script>
 
 <template>
@@ -87,7 +95,7 @@ const changeGroups = (group: Group) => {
     <PageContainer>
       <div style="display: flex">
         <h2>{{ selectedGroup.name }}</h2>
-        <button>自分のタスク</button>
+        <button @click="changeAssignee">自分のタスク</button>
         <button>タグ</button>
         <router-link :to="{ name: 'TaskAdd' }">
           <PrimaryButton text="新規タスクを追加" />
