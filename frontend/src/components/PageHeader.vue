@@ -12,7 +12,12 @@ defineProps<Prop>()
 <template>
   <header>
     <h1>{{ title }}</h1>
-    <img src="https://q.trap.jp/api/v3/public/icon/Pugma" alt="" width="30px" height="30px"/>
+    <img
+      :src="`https://q.trap.jp/api/v3/public/icon/${username}`"
+      alt=""
+      width="30px"
+      height="30px"
+    />
     <span>
       <h3>{{ username }}</h3>
     </span>
