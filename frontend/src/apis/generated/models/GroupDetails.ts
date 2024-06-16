@@ -2,6 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { Label } from './Label';
 export type GroupDetails = {
     id: string;
     name: string;
@@ -10,5 +11,6 @@ export type GroupDetails = {
     created_at: string;
     updated_at: string;
     user_ids: Array<string>;
+    labels: Array<Label>;
 };
 
