@@ -64,11 +64,11 @@ const createTask = () => {
   <div>
     <PageContainer>
       <div class="field">
-        <v-row class="justify-end">
-          <v-btn icon variant="flat">
-            <v-icon>mdi-close-circle-outline</v-icon>
+        <v-col cols="12" class="d-flex justify-end">
+          <v-btn icon variant="outlined" density="compact">
+            <v-icon>mdi-close</v-icon>
           </v-btn>
-        </v-row>
+        </v-col>
         <v-text-field v-model="taskName" label="タスク名" clearable />
         <v-text-field v-model="assignee" label="アサイン先(@で指定)" clearable />
         <v-text-field v-model="deadline" label="期日" readonly clearable>
