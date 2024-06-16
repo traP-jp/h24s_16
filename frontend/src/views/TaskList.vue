@@ -32,17 +32,17 @@ const userGroups = ref<GroupDetails[]>([
 const selectedGroup = ref<string>('自分のタスク全体')
 
 const tasks = ref<TaskDetails[]>([
-{
-  title: 'タイトル',
-  content:'内容',
-  message_id: '',
-  due_date: '6月15日',
-  id: '',
-  group_id: '',
-  created_at: '',
-  updated_at: '',
-  assigned_user_ids: ['ayana']
-}
+  {
+    title: 'タイトル',
+    content: '内容',
+    message_id: '',
+    due_date: '6月15日',
+    id: '',
+    group_id: '',
+    created_at: '',
+    updated_at: '',
+    assigned_user_ids: ['ayana']
+  }
 ])
 </script>
 
@@ -107,11 +107,11 @@ const tasks = ref<TaskDetails[]>([
   height: calc(100% - 5rem);
   display: grid;
   grid-template-columns: 1fr 5fr;
-  h2{
+  h2 {
     flex-grow: 1;
   }
   li {
-  list-style-type: none; /* 中黒を消す */
+    list-style-type: none; /* 中黒を消す */
   }
 }
 </style>
