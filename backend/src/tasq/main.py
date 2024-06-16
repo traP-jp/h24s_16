@@ -69,7 +69,7 @@ def get_or_create_user(db: Session, user_id: str):
         traq_user = traqUserApi.get_user(user_id)
         if not traq_user:
             raise HTTPException(status_code=404, detail="ユーザーが存在しません")
-        db_user = crud.create_user(db, models.UserCreate(id=user_id, remind_channel_id=None, periodic_remind_at=None))
+        db_user = crud.create_user(db, models.UserCreate(id=user_id, name=traq_user.name, remind_channel_id=None, periodic_remind_at=None))
         db.add(db_user)
     return db_user
 
@@ -81,6 +81,7 @@ def get_user(username: Annotated[str, Depends(trao_scheme)], db: Session = Depen
     if not user:
         return crud.create_user(db, schemas.UserCreate(
             id=traq_user.id,
+            name=traq_user.name,
             remind_channel_id=None,
             periodic_remind_at=None
         ))
@@ -93,8 +94,11 @@ def get_user_groups(username: Annotated[str, Depends(trao_scheme)], db: Session 
     groups = []
     for group_id in traq_user.groups:
         group = crud.read_group(db, group_id)
+        traq_group = traqGroupApi.get_user_group(group_id)
+        if not traq_group:
+            raise HTTPException(status_code=404, detail="グループが存在しません")
         if not group:
-            groups.append(crud.create_group(db, schemas.GroupCreate(id=group_id, remind_channel_id=None, periodic_remind_at=None)))
+            groups.append(crud.create_group(db, schemas.GroupCreate(id=group_id, name=traq_group.name, remind_channel_id=None, periodic_remind_at=None)))
         else:
             groups.append(group)
     return groups
@@ -107,6 +111,9 @@ def get_group(group_id: str, username: Annotated[str, Depends(trao_scheme)], db:
     group = crud.read_group(db, group_id)
     traq_group = traqGroupApi.get_user_group(group_id=group_id)
     if not group:
+        traq_group = traqGroupApi.get_user_group(group_id)
+        if not traq_group:
+            raise HTTPException(status_code=404, detail="グループが存在しません")
         group = crud.create_group(db, schemas.GroupCreate(id=group_id, remind_channel_id = None, periodic_remind_at = None))
     return GroupDetails(user_ids=map(lambda x: x.id, traq_group.members), **group.__dict__)
 
