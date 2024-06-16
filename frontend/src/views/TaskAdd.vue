@@ -20,10 +20,10 @@ apiClient.default.getUserUsersMeGet().then((res) => (user.value = res))
 const datePickerDisplay = ref(false)
 
 const newTask = ref<CreateTaskReqDTO>({
-  title: 'string',
-  content: 'string',
-  due_date: 'string',
-  group_id: 'string',
+  title: '',
+  content: '',
+  due_date: '',
+  group_id: '',
   // labels: [],
   assigned_user_ids: []
 })
