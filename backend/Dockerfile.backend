@@ -1,9 +1,17 @@
 FROM python:slim
 
 WORKDIR /app
+
+COPY docker-entrypoint.backend.sh /docker-entrypoint.sh
+ENTRYPOINT ["/docker-entrypoint.sh"]
+
 COPY requirements.lock ./
 RUN PYTHONDONTWRITEBYTECODE=1 pip install --no-cache-dir -r requirements.lock
 
-COPY src .
-CMD uvicorn tasq.main:app --host 0.0.0.0 --port $PORT
+ENV PYTHON_ENV production
+ENV PYTHON_PATH=.
+
+COPY src alembic.ini .
+COPY alembic ./alembic
+CMD ["uvicorn", "tasq.main:app", "--host", "0.0.0.0", "--port", "8080"]
 
