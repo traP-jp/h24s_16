@@ -48,6 +48,7 @@ class TaskDetails(schemas.Task):
 
 class CreateTaskReqDTO(schemas.TaskCreate):
     assigned_user_ids: list[str]
+    label_ids: list[str]
 
 
 class UpdateTaskReqDTO(schemas.TaskUpdate):
@@ -127,7 +128,15 @@ def create_task(new_task: CreateTaskReqDTO, username: Annotated[str, Depends(tra
     traq_user = get_traq_user_from_name(username)
     if not new_task.group_id in traq_user.groups:
         raise HTTPException(status_code=404, detail="ユーザーがこのグループに所属していません")
-    db_crud_task = schemas.TaskCreate(title=new_task.title, content=new_task.content, message_id=new_task.message_id, due_date=new_task.due_date, group_id=new_task.group_id)
+    labels = []
+    for label_id in label_ids:
+        db_label = crud.read_label(db, label_id)
+        if not db_label:
+            raise HTTPException(status_code=404, detail="ラベルが存在しません")
+        if db_label.group.id != new_task.group_id:
+            raise HTTPException(status=400, detail="ラベルが該当グループに属していません")
+        labels.append(db_label)
+    db_crud_task = schemas.TaskCreate(title=new_task.title, content=new_task.content, message_id=new_task.message_id, due_date=new_task.due_date, group_id=new_task.group_id, labels=labels)
     db_crud_task = crud.create_task(db, db_crud_task)
     for db_user_id in new_task.assigned_user_ids:
         if crud.read_user(db, db_user_id) is None:
@@ -213,6 +222,8 @@ def put_task_assignee(task_id: str, label_ids: list[str], username: Annotated[st
         db_label = crud.read_label(db, label_id)
         if not db_label:
             raise HTTPException(status_code=404, detail="ラベルが存在しません")
+        if db_label.group.id != task.group.id:
+            raise HTTPException(status_code=400, detail="ラベルは該当グループに属していません")
         task.labels.append(db_label)
     db.commit()
     db.refresh(task)
