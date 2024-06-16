@@ -40,7 +40,7 @@ const tasks = ref<TaskDetails[]>([])
     <!-- サイドバー -->
     <div class="sidebar">
       <ul>
-        <li>
+        <li class="topLevel">
           <button @click="selectedGroup = '自分のタスク全体'">自分のタスク全体</button>
         </li>
         <li v-for="group in userGroups" :key="group.id">
@@ -52,7 +52,7 @@ const tasks = ref<TaskDetails[]>([])
       </router-link>
     </div>
     <PageContainer>
-      {{ selectedGroup }}
+      <h2>{{ selectedGroup }}</h2>
       <!-- タスク一覧表示 -->
       <ul>
         <li v-for="task in tasks" :key="task.id">
@@ -72,17 +72,19 @@ const tasks = ref<TaskDetails[]>([])
   padding: 60px 30px; /* Adjust this value to match the height of your header */
   overflow: auto;
   li {
-    margin-bottom: 20px; /* Adjust this value to increase or decrease the space */
+    padding: 10px 0; /* Adjust this value to increase or decrease the space */
+    list-style-type: none; /* 中黒を消す */
+    font-size: 1.05rem;
+    font-weight: 700;
+  }
+  .topLevel{
+    border-bottom: 2px solid #dddddd;
   }
 }
 
 .task-title {
   font-weight: bold; /* 太文字にする */
   font-size: 1.2em; /* フォントサイズを20%大きくする */
-}
-
-ul {
-  list-style-type: none; /* 中黒を消す */
 }
 
 .pageContents {
