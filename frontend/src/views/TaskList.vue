@@ -89,6 +89,5 @@ ul {
   height: calc(100% - 5rem);
   display: grid;
   grid-template-columns: 1fr 5fr;
-  align-content: center;
 }
 </style>
