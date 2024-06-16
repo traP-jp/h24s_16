@@ -113,8 +113,8 @@ const tasks = ref<TaskDetails[]>([
     color: #555555;
   }
   .groups.active {
-    color: #6aa2b4; /* ここで希望の色を指定します */
-  }
+  color: $color-primary; /* ここで希望の色を指定します */
+}
 }
 
 .task-title {
